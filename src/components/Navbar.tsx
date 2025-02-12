@@ -6,17 +6,24 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+// Define the type for navigation items
+type NavigationItem = {
+  name: string;
+  href: string;
+  requiresAuth?: boolean;
+};
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const publicNavigation = [
+  const publicNavigation: NavigationItem[] = [
     { name: "Home", href: "/" },
     { name: "Courses", href: "/courses" },
   ];
 
-  const protectedNavigation = [
+  const protectedNavigation: NavigationItem[] = [
     { name: "Practice", href: "/practice", requiresAuth: true },
     { name: "Discussion", href: "/discussion", requiresAuth: true },
   ];
