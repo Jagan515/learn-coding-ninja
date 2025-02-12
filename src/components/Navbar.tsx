@@ -1,18 +1,35 @@
 
 import { Button } from "@/components/ui/button";
-import { Laptop, Menu } from "lucide-react";
+import { Laptop, Menu, Lock } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
-  const navigation = [
+  const publicNavigation = [
     { name: "Home", href: "/" },
     { name: "Courses", href: "/courses" },
-    { name: "Practice", href: "/practice" },
-    { name: "Discussion", href: "/discussion" },
   ];
+
+  const protectedNavigation = [
+    { name: "Practice", href: "/practice", requiresAuth: true },
+    { name: "Discussion", href: "/discussion", requiresAuth: true },
+  ];
+
+  const navigation = [...publicNavigation, ...protectedNavigation];
+
+  const handleNavigation = (href: string, requiresAuth: boolean) => {
+    if (requiresAuth && !user) {
+      navigate("/login");
+      return;
+    }
+    navigate(href);
+  };
 
   return (
     <nav className="border-b">
@@ -26,15 +43,22 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navigation.map((item) => (
-              <a
+              <button
                 key={item.name}
-                href={item.href}
-                className="nav-link font-medium"
+                onClick={() => handleNavigation(item.href, !!item.requiresAuth)}
+                className="nav-link font-medium inline-flex items-center"
               >
                 {item.name}
-              </a>
+                {item.requiresAuth && !user && (
+                  <Lock className="ml-1 h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
             ))}
-            <Button>Get Started</Button>
+            {user ? (
+              <Button onClick={() => signOut()}>Sign Out</Button>
+            ) : (
+              <Button onClick={() => navigate("/login")}>Get Started</Button>
+            )}
           </div>
 
           {/* Mobile Navigation */}
@@ -48,16 +72,25 @@ const Navbar = () => {
               <SheetContent>
                 <div className="flex flex-col space-y-4 mt-4">
                   {navigation.map((item) => (
-                    <a
+                    <button
                       key={item.name}
-                      href={item.href}
-                      className="nav-link font-medium"
-                      onClick={() => setIsOpen(false)}
+                      onClick={() => {
+                        handleNavigation(item.href, !!item.requiresAuth);
+                        setIsOpen(false);
+                      }}
+                      className="nav-link font-medium inline-flex items-center"
                     >
                       {item.name}
-                    </a>
+                      {item.requiresAuth && !user && (
+                        <Lock className="ml-1 h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
                   ))}
-                  <Button className="w-full">Get Started</Button>
+                  {user ? (
+                    <Button onClick={() => signOut()}>Sign Out</Button>
+                  ) : (
+                    <Button onClick={() => navigate("/login")}>Get Started</Button>
+                  )}
                 </div>
               </SheetContent>
             </Sheet>
