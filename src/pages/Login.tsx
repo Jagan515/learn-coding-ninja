@@ -20,19 +20,32 @@ const Login = () => {
       if (isSignUp) {
         await signUp(email, password);
         toast({
-          title: "Account created successfully!",
-          description: "Please verify your email to continue.",
+          title: "Check your email",
+          description: "We've sent you a verification link to complete your registration.",
         });
       } else {
         await signIn(email, password);
         navigate("/dashboard");
       }
     } catch (error: any) {
+      const errorMessage = error.message;
+      let userFriendlyMessage = "An error occurred.";
+
+      // Handle specific error cases
+      if (errorMessage.includes("Invalid login credentials")) {
+        userFriendlyMessage = "Invalid email or password. Please try again or sign up if you don't have an account.";
+      } else if (errorMessage.includes("Email not confirmed")) {
+        userFriendlyMessage = "Please verify your email address before logging in.";
+      } else if (errorMessage.includes("User already registered")) {
+        userFriendlyMessage = "An account with this email already exists. Please try logging in instead.";
+      }
+
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message,
+        description: userFriendlyMessage,
       });
+      console.error("Auth error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -60,23 +73,24 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
             />
           </div>
           <div className="flex gap-4">
             <Button
               className="w-full"
               onClick={() => handleSubmit(false)}
-              disabled={isLoading}
+              disabled={isLoading || !email || !password}
             >
-              Sign In
+              {isLoading ? "Loading..." : "Sign In"}
             </Button>
             <Button
               className="w-full"
               variant="outline"
               onClick={() => handleSubmit(true)}
-              disabled={isLoading}
+              disabled={isLoading || !email || !password}
             >
-              Sign Up
+              {isLoading ? "Loading..." : "Sign Up"}
             </Button>
           </div>
         </form>
