@@ -14,9 +14,11 @@ export type Database = {
           created_at: string
           description: string
           difficulty: Database["public"]["Enums"]["course_difficulty"]
+          estimated_hours: number
           id: string
           image_url: string | null
           is_published: boolean | null
+          programming_language: string
           title: string
           updated_at: string
         }
@@ -24,9 +26,11 @@ export type Database = {
           created_at?: string
           description: string
           difficulty: Database["public"]["Enums"]["course_difficulty"]
+          estimated_hours?: number
           id?: string
           image_url?: string | null
           is_published?: boolean | null
+          programming_language?: string
           title: string
           updated_at?: string
         }
@@ -34,9 +38,11 @@ export type Database = {
           created_at?: string
           description?: string
           difficulty?: Database["public"]["Enums"]["course_difficulty"]
+          estimated_hours?: number
           id?: string
           image_url?: string | null
           is_published?: boolean | null
+          programming_language?: string
           title?: string
           updated_at?: string
         }
@@ -141,6 +147,54 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -149,6 +203,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       course_difficulty: "beginner" | "intermediate" | "advanced"
     }
     CompositeTypes: {
