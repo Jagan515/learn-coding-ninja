@@ -1,18 +1,25 @@
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import CourseProgress from "@/components/CourseProgress";
 import { Book } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const CourseDetails = () => {
   const { courseId } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { data: course, isLoading } = useQuery({
     queryKey: ["course", courseId],
     queryFn: async () => {
+      if (!courseId) {
+        throw new Error("Course ID is required");
+      }
+
       const { data, error } = await supabase
         .from("courses")
         .select(`
@@ -31,19 +38,49 @@ const CourseDetails = () => {
           )
         `)
         .eq("id", courseId)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching course:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load course details. Please try again.",
+        });
+        throw error;
+      }
+
+      if (!data) {
+        navigate("/404");
+        return null;
+      }
+
       return data;
     },
+    enabled: !!courseId, // Only run query if courseId exists
   });
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/3"></div>
+            <div className="h-4 bg-muted rounded w-2/3"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-muted rounded"></div>
+              <div className="h-4 bg-muted rounded"></div>
+              <div className="h-4 bg-muted rounded"></div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   if (!course) {
-    return <div>Course not found</div>;
+    return null; // Navigation to 404 will handle this case
   }
 
   return (
