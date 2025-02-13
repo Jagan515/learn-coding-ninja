@@ -4,9 +4,8 @@ import { Laptop, Menu, Lock } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-// Define the type for navigation items
 type NavigationItem = {
   name: string;
   href: string;
@@ -17,6 +16,7 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const publicNavigation: NavigationItem[] = [
     { name: "Home", href: "/" },
@@ -30,19 +30,31 @@ const Navbar = () => {
 
   const navigation = [...publicNavigation, ...protectedNavigation];
 
-  const handleNavigation = (href: string, requiresAuth: boolean) => {
+  const handleNavigation = (href: string, requiresAuth?: boolean) => {
     if (requiresAuth && !user) {
       navigate("/login");
       return;
     }
     navigate(href);
+    setIsOpen(false);
   };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  const isActive = (href: string) => location.pathname === href;
 
   return (
     <nav className="border-b">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          <div className="flex items-center">
+          <div className="flex items-center cursor-pointer" onClick={() => navigate("/")}>
             <Laptop className="h-8 w-8" />
             <span className="ml-2 text-xl font-semibold">CodeNinja</span>
           </div>
@@ -52,8 +64,10 @@ const Navbar = () => {
             {navigation.map((item) => (
               <button
                 key={item.name}
-                onClick={() => handleNavigation(item.href, !!item.requiresAuth)}
-                className="nav-link font-medium inline-flex items-center"
+                onClick={() => handleNavigation(item.href, item.requiresAuth)}
+                className={`nav-link font-medium inline-flex items-center ${
+                  isActive(item.href) ? "text-primary" : "text-muted-foreground"
+                }`}
               >
                 {item.name}
                 {item.requiresAuth && !user && (
@@ -62,7 +76,7 @@ const Navbar = () => {
               </button>
             ))}
             {user ? (
-              <Button onClick={() => signOut()}>Sign Out</Button>
+              <Button onClick={handleSignOut}>Sign Out</Button>
             ) : (
               <Button onClick={() => navigate("/login")}>Get Started</Button>
             )}
@@ -81,11 +95,10 @@ const Navbar = () => {
                   {navigation.map((item) => (
                     <button
                       key={item.name}
-                      onClick={() => {
-                        handleNavigation(item.href, !!item.requiresAuth);
-                        setIsOpen(false);
-                      }}
-                      className="nav-link font-medium inline-flex items-center"
+                      onClick={() => handleNavigation(item.href, item.requiresAuth)}
+                      className={`nav-link font-medium inline-flex items-center ${
+                        isActive(item.href) ? "text-primary" : "text-muted-foreground"
+                      }`}
                     >
                       {item.name}
                       {item.requiresAuth && !user && (
@@ -94,7 +107,7 @@ const Navbar = () => {
                     </button>
                   ))}
                   {user ? (
-                    <Button onClick={() => signOut()}>Sign Out</Button>
+                    <Button onClick={handleSignOut}>Sign Out</Button>
                   ) : (
                     <Button onClick={() => navigate("/login")}>Get Started</Button>
                   )}
