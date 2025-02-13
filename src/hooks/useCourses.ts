@@ -13,6 +13,12 @@ export const useCourses = () => {
           enrollments (
             completed_at,
             enrolled_at
+          ),
+          category:course_categories (
+            id,
+            title,
+            description,
+            parent_id
           )
         `)
         .eq("is_published", true);
