@@ -1,7 +1,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 type AuthContextType = {
   user: User | null;
@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, session);
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -40,19 +41,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    console.log("Attempting to sign in:", email);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    if (error) throw error;
+    if (error) {
+      console.error("Sign in error:", error);
+      throw error;
+    }
   };
 
   const signUp = async (email: string, password: string) => {
+    console.log("Attempting to sign up:", email);
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: window.location.origin
+      }
     });
-    if (error) throw error;
+    if (error) {
+      console.error("Sign up error:", error);
+      throw error;
+    }
   };
 
   const signOut = async () => {
