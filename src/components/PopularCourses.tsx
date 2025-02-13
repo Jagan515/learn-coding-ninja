@@ -1,50 +1,41 @@
 
-import { useState } from "react";
+import { useCourses } from "@/hooks/useCourses";
 import CourseCard from "./CourseCard";
-
-const popularCourses = [
-  {
-    id: 1,
-    title: "Python Fundamentals",
-    description: "Learn Python programming from scratch with hands-on exercises and projects.",
-    level: "Beginner",
-    duration: "8 weeks",
-    progress: 0,
-    lessons: 24,
-  },
-  {
-    id: 2,
-    title: "JavaScript Essentials",
-    description: "Master JavaScript fundamentals and modern ES6+ features.",
-    level: "Beginner",
-    duration: "10 weeks",
-    progress: 0,
-    lessons: 32,
-  },
-  {
-    id: 3,
-    title: "Java Programming",
-    description: "Comprehensive Java course covering OOP concepts and more.",
-    level: "Intermediate",
-    duration: "12 weeks",
-    progress: 0,
-    lessons: 40,
-  },
-  {
-    id: 4,
-    title: "Advanced C++",
-    description: "Deep dive into C++ with focus on performance and systems programming.",
-    level: "Advanced",
-    duration: "16 weeks",
-    progress: 0,
-    lessons: 48,
-  },
-] as const;
+import { useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
 
 const PopularCourses = () => {
-  const handleCourseClick = (courseId: number) => {
-    console.log(`Navigating to course ${courseId}`);
+  const navigate = useNavigate();
+  const { data: courses, isLoading, error } = useCourses();
+
+  const handleCourseClick = (courseId: string) => {
+    navigate(`/courses/${courseId}`);
   };
+
+  if (isLoading) {
+    return (
+      <section className="py-16 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-[300px] animate-pulse bg-gray-200 rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-16 text-center">
+        <p className="text-red-500">Failed to load courses</p>
+        <Button onClick={() => window.location.reload()} className="mt-4">
+          Try Again
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <section className="py-16 bg-slate-50">
@@ -58,10 +49,17 @@ const PopularCourses = () => {
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slideIn">
-          {popularCourses.map((course) => (
+          {courses?.map((course) => (
             <CourseCard
               key={course.id}
-              {...course}
+              id={course.id}
+              title={course.title}
+              description={course.description}
+              level={course.difficulty}
+              duration={`${course.estimated_hours}h`}
+              progress={0}
+              lessons={24}
+              language={course.programming_language}
               onClick={() => handleCourseClick(course.id)}
             />
           ))}

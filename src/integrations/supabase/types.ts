@@ -9,6 +9,44 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      course_sections: {
+        Row: {
+          course_id: string
+          created_at: string
+          description: string | null
+          id: string
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_sections_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string
@@ -112,28 +150,37 @@ export type Database = {
       lessons: {
         Row: {
           content: string
+          content_type: string
           course_id: string
           created_at: string
+          duration_minutes: number | null
           id: string
           order_index: number
+          section_id: string | null
           title: string
           updated_at: string
         }
         Insert: {
           content: string
+          content_type?: string
           course_id: string
           created_at?: string
+          duration_minutes?: number | null
           id?: string
           order_index: number
+          section_id?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           content?: string
+          content_type?: string
           course_id?: string
           created_at?: string
+          duration_minutes?: number | null
           id?: string
           order_index?: number
+          section_id?: string | null
           title?: string
           updated_at?: string
         }
@@ -143,6 +190,13 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lessons_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "course_sections"
             referencedColumns: ["id"]
           },
         ]
