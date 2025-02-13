@@ -8,6 +8,9 @@ import CourseProgress from "@/components/CourseProgress";
 import { Book } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 const CourseDetails = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
@@ -16,8 +19,9 @@ const CourseDetails = () => {
   const { data: course, isLoading } = useQuery({
     queryKey: ["course", courseId],
     queryFn: async () => {
-      if (!courseId) {
-        throw new Error("Course ID is required");
+      if (!courseId || !UUID_REGEX.test(courseId)) {
+        navigate("/404");
+        return null;
       }
 
       const { data, error } = await supabase
@@ -57,7 +61,7 @@ const CourseDetails = () => {
 
       return data;
     },
-    enabled: !!courseId, // Only run query if courseId exists
+    enabled: !!courseId,
   });
 
   if (isLoading) {
