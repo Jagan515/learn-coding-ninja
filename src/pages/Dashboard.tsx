@@ -1,29 +1,22 @@
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { Navigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
+import CodeTerminal from "@/components/CodeEditor/CodeTerminal";
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-    }
-  }, [user, navigate]);
-
-  if (!user) return null;
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Welcome back!</h1>
-        <div className="grid gap-6">
-          {/* Dashboard content will be implemented in future iterations */}
-        </div>
+        <h1 className="text-3xl font-bold mb-8">Coding Playground</h1>
+        <CodeTerminal />
       </main>
     </div>
   );
