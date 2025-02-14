@@ -24,6 +24,7 @@ const Navbar = () => {
   ];
 
   const protectedNavigation: NavigationItem[] = [
+    { name: "Terminal", href: "/terminal", requiresAuth: true },
     { name: "Practice", href: "/practice", requiresAuth: true },
     { name: "Discussion", href: "/discussion", requiresAuth: true },
   ];
