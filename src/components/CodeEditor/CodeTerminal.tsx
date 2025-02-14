@@ -14,6 +14,7 @@ import LanguageSelector, { ProgrammingLanguage } from "./LanguageSelector";
 import { ScrollArea } from "../ui/scroll-area";
 import { Toggle } from "../ui/toggle";
 import { Badge } from "../ui/badge";
+import { cn } from "@/lib/utils";
 
 const getLanguageExtension = (language: ProgrammingLanguage) => {
   switch (language) {
