@@ -37,8 +37,25 @@ const CodeTerminal = () => {
 
   const handleRun = () => {
     setIsRunning(true);
-    // For now, just echo the code to output
-    setOutput(`Running ${language.toUpperCase()} code:\n\n${code}`);
+    // Simulate compilation and execution with language-specific messages
+    const compileMessage = `[${language.toUpperCase()}] Compiling code...\n`;
+    const runtimeMessage = `[${language.toUpperCase()}] Executing program...\n`;
+    let outputMessage = "";
+
+    switch (language) {
+      case "python":
+        outputMessage = `${compileMessage}>>> ${code}\n\nOutput:\n${code}`;
+        break;
+      case "java":
+        outputMessage = `${compileMessage}javac Main.java\n${runtimeMessage}java Main\n\nOutput:\n${code}`;
+        break;
+      case "c":
+      case "cpp":
+        outputMessage = `${compileMessage}g++ -o program main.cpp\n${runtimeMessage}./program\n\nOutput:\n${code}`;
+        break;
+    }
+
+    setOutput(outputMessage);
     // Simulate compilation/execution time
     setTimeout(() => setIsRunning(false), 1000);
   };
@@ -49,6 +66,8 @@ const CodeTerminal = () => {
 
   const toggleTheme = () => {
     setIsDarkTheme(!isDarkTheme);
+    // Toggle the class on the document root for global theme
+    document.documentElement.classList.toggle("dark");
   };
 
   return (
@@ -61,7 +80,10 @@ const CodeTerminal = () => {
                 selectedLanguage={language}
                 onLanguageChange={setLanguage}
               />
-              <Badge variant="outline" className="ml-2">
+              <Badge variant="outline" className={cn(
+                "ml-2 transition-colors",
+                isRunning ? "bg-primary/10 text-primary" : "bg-muted"
+              )}>
                 {isRunning ? "Running" : "Ready"} - {language.toUpperCase()} Compiler
               </Badge>
             </div>
@@ -70,6 +92,7 @@ const CodeTerminal = () => {
             pressed={isDarkTheme}
             onPressedChange={toggleTheme}
             aria-label="Toggle theme"
+            className="bg-background hover:bg-muted"
           >
             {isDarkTheme ? (
               <SunIcon className="h-4 w-4" />
@@ -81,8 +104,8 @@ const CodeTerminal = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className={cn(
-          "min-h-[300px] border-2 rounded-lg overflow-hidden",
-          !isDarkTheme && "border-gray-300 shadow-sm"
+          "min-h-[300px] border-2 rounded-lg overflow-hidden transition-colors",
+          !isDarkTheme ? "border-gray-300 shadow-sm" : "border-gray-800"
         )}>
           <CodeMirror
             value={code}
@@ -91,15 +114,15 @@ const CodeTerminal = () => {
             theme={isDarkTheme ? oneDark : EditorView.theme({})}
             onChange={(value) => setCode(value)}
             className={cn(
-              "text-sm",
-              !isDarkTheme && "bg-white"
+              "text-sm transition-colors",
+              !isDarkTheme ? "bg-white" : "bg-gray-900"
             )}
           />
         </div>
-        <Separator />
+        <Separator className="my-4" />
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-medium">Output</h3>
+            <h3 className="text-sm font-medium">Output Terminal</h3>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -116,7 +139,7 @@ const CodeTerminal = () => {
                 disabled={isRunning}
                 className={cn(
                   "transition-all",
-                  isRunning && "animate-pulse"
+                  isRunning && "animate-pulse bg-primary/90"
                 )}
               >
                 <Play className="h-4 w-4 mr-2" />
@@ -125,10 +148,18 @@ const CodeTerminal = () => {
             </div>
           </div>
           <ScrollArea className={cn(
-            "h-[200px] w-full rounded-md border-2 p-4",
-            isDarkTheme ? "bg-muted/50" : "bg-gray-50 border-gray-200"
+            "h-[200px] w-full rounded-md border-2 p-4 transition-colors font-mono",
+            isDarkTheme 
+              ? "bg-gray-900/50 border-gray-800 text-gray-100" 
+              : "bg-gray-50 border-gray-200 text-gray-800"
           )}>
-            <pre className="font-mono text-sm">{output}</pre>
+            <pre className="text-sm whitespace-pre-wrap">
+              {output || (
+                <span className="text-muted-foreground italic">
+                  Terminal output will appear here...
+                </span>
+              )}
+            </pre>
           </ScrollArea>
         </div>
       </CardContent>
