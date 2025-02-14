@@ -13,6 +13,7 @@ import { MoonIcon, SunIcon, Play, Trash2 } from "lucide-react";
 import LanguageSelector, { ProgrammingLanguage } from "./LanguageSelector";
 import { ScrollArea } from "../ui/scroll-area";
 import { Toggle } from "../ui/toggle";
+import { Badge } from "../ui/badge";
 
 const getLanguageExtension = (language: ProgrammingLanguage) => {
   switch (language) {
@@ -31,10 +32,14 @@ const CodeTerminal = () => {
   const [output, setOutput] = useState("");
   const [language, setLanguage] = useState<ProgrammingLanguage>("python");
   const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isRunning, setIsRunning] = useState(false);
 
   const handleRun = () => {
+    setIsRunning(true);
     // For now, just echo the code to output
     setOutput(`Running ${language.toUpperCase()} code:\n\n${code}`);
+    // Simulate compilation/execution time
+    setTimeout(() => setIsRunning(false), 1000);
   };
 
   const handleClear = () => {
@@ -46,13 +51,20 @@ const CodeTerminal = () => {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto border-2">
       <CardHeader className="space-y-4">
         <div className="flex items-center justify-between">
-          <LanguageSelector
-            selectedLanguage={language}
-            onLanguageChange={setLanguage}
-          />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <LanguageSelector
+                selectedLanguage={language}
+                onLanguageChange={setLanguage}
+              />
+              <Badge variant="outline" className="ml-2">
+                {isRunning ? "Running" : "Ready"} - {language.toUpperCase()} Compiler
+              </Badge>
+            </div>
+          </div>
           <Toggle
             pressed={isDarkTheme}
             onPressedChange={toggleTheme}
@@ -67,14 +79,20 @@ const CodeTerminal = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="min-h-[300px] border rounded-lg overflow-hidden">
+        <div className={cn(
+          "min-h-[300px] border-2 rounded-lg overflow-hidden",
+          !isDarkTheme && "border-gray-300 shadow-sm"
+        )}>
           <CodeMirror
             value={code}
             height="300px"
             extensions={[getLanguageExtension(language)]}
             theme={isDarkTheme ? oneDark : EditorView.theme({})}
             onChange={(value) => setCode(value)}
-            className="text-sm"
+            className={cn(
+              "text-sm",
+              !isDarkTheme && "bg-white"
+            )}
           />
         </div>
         <Separator />
@@ -86,18 +104,29 @@ const CodeTerminal = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleClear}
-                disabled={!output}
+                disabled={!output || isRunning}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Clear
               </Button>
-              <Button size="sm" onClick={handleRun}>
+              <Button 
+                size="sm" 
+                onClick={handleRun}
+                disabled={isRunning}
+                className={cn(
+                  "transition-all",
+                  isRunning && "animate-pulse"
+                )}
+              >
                 <Play className="h-4 w-4 mr-2" />
-                Run
+                {isRunning ? "Running..." : "Run"}
               </Button>
             </div>
           </div>
-          <ScrollArea className="h-[200px] w-full rounded-md border bg-muted/50 p-4">
+          <ScrollArea className={cn(
+            "h-[200px] w-full rounded-md border-2 p-4",
+            isDarkTheme ? "bg-muted/50" : "bg-gray-50 border-gray-200"
+          )}>
             <pre className="font-mono text-sm">{output}</pre>
           </ScrollArea>
         </div>
