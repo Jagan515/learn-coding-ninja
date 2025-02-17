@@ -6,15 +6,16 @@ import { java } from "@codemirror/lang-java";
 import { cpp } from "@codemirror/lang-cpp";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView } from "@codemirror/view";
-import { Button } from "../ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
+import { Card, CardContent, CardHeader } from "../ui/card";
 import { Separator } from "../ui/separator";
-import { MoonIcon, SunIcon, Play, Trash2, Bug, StepForward, StepBack, Pause } from "lucide-react";
+import { MoonIcon, SunIcon } from "lucide-react";
 import LanguageSelector, { ProgrammingLanguage } from "./LanguageSelector";
-import { ScrollArea } from "../ui/scroll-area";
 import { Toggle } from "../ui/toggle";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
+import ControlPanel from "./ControlPanel";
+import OutputTerminal from "./OutputTerminal";
+import DebugPanel from "./DebugPanel";
 
 const getLanguageExtension = (language: ProgrammingLanguage) => {
   switch (language) {
@@ -79,7 +80,6 @@ const CodeTerminal = () => {
       isDebugging: true,
       currentLine: 0,
       variables: { 
-        // Simulate some variables for demonstration
         "counter": 0,
         "message": "Hello, debugger!",
         "array": [1, 2, 3]
@@ -100,13 +100,8 @@ const CodeTerminal = () => {
     setOutput(prev => prev + `\n[Debugger] Stepped to line ${debugState.currentLine + 1}`);
   };
 
-  const handleToggleBreakpoint = (line: number) => {
-    setDebugState(prev => ({
-      ...prev,
-      breakpoints: prev.breakpoints.includes(line)
-        ? prev.breakpoints.filter(bp => bp !== line)
-        : [...prev.breakpoints, line]
-    }));
+  const handleStopDebug = () => {
+    setDebugState(prev => ({ ...prev, isDebugging: false }));
   };
 
   const handleClear = () => {
@@ -189,101 +184,30 @@ const CodeTerminal = () => {
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={handleRun}
-              disabled={isRunning || debugState.isDebugging}
-              className={cn(
-                "transition-all",
-                isRunning && "animate-pulse bg-primary/90"
-              )}
-            >
-              <Play className="h-4 w-4 mr-2" />
-              {isRunning ? "Running..." : "Run"}
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={handleDebug}
-              disabled={isRunning || debugState.isDebugging}
-            >
-              <Bug className="h-4 w-4 mr-2" />
-              Debug
-            </Button>
-            {debugState.isDebugging && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleStepOver}
-                >
-                  <StepForward className="h-4 w-4 mr-2" />
-                  Step Over
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setDebugState(prev => ({ ...prev, isDebugging: false }))}
-                >
-                  <Pause className="h-4 w-4 mr-2" />
-                  Stop
-                </Button>
-              </>
-            )}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClear}
-            disabled={!output || isRunning}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear
-          </Button>
-        </div>
+        
+        <ControlPanel
+          onRun={handleRun}
+          onDebug={handleDebug}
+          onStepOver={handleStepOver}
+          onStopDebug={handleStopDebug}
+          onClear={handleClear}
+          isRunning={isRunning}
+          isDebugging={debugState.isDebugging}
+          hasOutput={!!output}
+        />
+
         <Separator className="my-4" />
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Output Terminal</h3>
-            <ScrollArea className={cn(
-              "h-[200px] w-full rounded-md border-2 p-4 transition-colors font-mono",
-              isDarkTheme 
-                ? "bg-gray-900/50 border-gray-800 text-gray-100" 
-                : "bg-gray-50 border-gray-200 text-gray-800"
-            )}>
-              <pre className="text-sm whitespace-pre-wrap">
-                {output || (
-                  <span className="text-muted-foreground italic">
-                    Terminal output will appear here...
-                  </span>
-                )}
-              </pre>
-            </ScrollArea>
-          </div>
+          <OutputTerminal
+            output={output}
+            isDarkTheme={isDarkTheme}
+          />
           {debugState.isDebugging && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">Variables</h3>
-              <ScrollArea className={cn(
-                "h-[200px] w-full rounded-md border-2 p-4 transition-colors font-mono",
-                isDarkTheme 
-                  ? "bg-gray-900/50 border-gray-800 text-gray-100" 
-                  : "bg-gray-50 border-gray-200 text-gray-800"
-              )}>
-                <pre className="text-sm">
-                  {Object.entries(debugState.variables).map(([key, value]) => (
-                    <div key={key} className="mb-1">
-                      <span className="text-blue-500">{key}</span>
-                      <span className="text-gray-500"> = </span>
-                      <span className="text-green-500">
-                        {typeof value === 'object' ? JSON.stringify(value) : value.toString()}
-                      </span>
-                    </div>
-                  ))}
-                </pre>
-              </ScrollArea>
-            </div>
+            <DebugPanel
+              variables={debugState.variables}
+              isDarkTheme={isDarkTheme}
+            />
           )}
         </div>
       </CardContent>
