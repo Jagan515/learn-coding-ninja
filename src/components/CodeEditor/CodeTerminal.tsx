@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -16,6 +15,7 @@ import { cn } from "@/lib/utils";
 import ControlPanel from "./ControlPanel";
 import OutputTerminal from "./OutputTerminal";
 import DebugPanel from "./DebugPanel";
+import MemoryPanel from "./MemoryPanel";
 
 const getLanguageExtension = (language: ProgrammingLanguage) => {
   switch (language) {
@@ -34,6 +34,12 @@ interface DebugState {
   breakpoints: number[];
   currentLine: number;
   variables: Record<string, any>;
+  memoryStats: {
+    heapUsed: number;
+    heapTotal: number;
+    timeElapsed: number;
+    cpuUsage: number;
+  };
 }
 
 const CodeTerminal = () => {
@@ -47,6 +53,12 @@ const CodeTerminal = () => {
     breakpoints: [],
     currentLine: 0,
     variables: {},
+    memoryStats: {
+      heapUsed: 0,
+      heapTotal: 0,
+      timeElapsed: 0,
+      cpuUsage: 0,
+    },
   });
 
   const handleRun = () => {
@@ -75,6 +87,8 @@ const CodeTerminal = () => {
   };
 
   const handleDebug = () => {
+    const startTime = performance.now();
+    
     setDebugState(prev => ({
       ...prev,
       isDebugging: true,
@@ -83,18 +97,32 @@ const CodeTerminal = () => {
         "counter": 0,
         "message": "Hello, debugger!",
         "array": [1, 2, 3]
+      },
+      memoryStats: {
+        heapUsed: 50 * 1024 * 1024, // 50MB
+        heapTotal: 100 * 1024 * 1024, // 100MB
+        timeElapsed: performance.now() - startTime,
+        cpuUsage: 25, // 25% CPU usage
       }
     }));
     setOutput("[Debugger] Starting debug session...\n");
   };
 
   const handleStepOver = () => {
+    const startTime = performance.now();
+    
     setDebugState(prev => ({
       ...prev,
       currentLine: prev.currentLine + 1,
       variables: {
         ...prev.variables,
         counter: prev.variables.counter + 1
+      },
+      memoryStats: {
+        ...prev.memoryStats,
+        heapUsed: prev.memoryStats.heapUsed + 1024 * 1024, // Simulate 1MB increase
+        timeElapsed: performance.now() - startTime,
+        cpuUsage: Math.min(prev.memoryStats.cpuUsage + 5, 100), // Increase CPU usage
       }
     }));
     setOutput(prev => prev + `\n[Debugger] Stepped to line ${debugState.currentLine + 1}`);
@@ -198,16 +226,26 @@ const CodeTerminal = () => {
 
         <Separator className="my-4" />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <OutputTerminal
-            output={output}
-            isDarkTheme={isDarkTheme}
-          />
-          {debugState.isDebugging && (
-            <DebugPanel
-              variables={debugState.variables}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2">
+            <OutputTerminal
+              output={output}
               isDarkTheme={isDarkTheme}
             />
+          </div>
+          {debugState.isDebugging && (
+            <>
+              <DebugPanel
+                variables={debugState.variables}
+                isDarkTheme={isDarkTheme}
+              />
+              <div className="md:col-span-3">
+                <MemoryPanel
+                  stats={debugState.memoryStats}
+                  isDarkTheme={isDarkTheme}
+                />
+              </div>
+            </>
           )}
         </div>
       </CardContent>
