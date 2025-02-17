@@ -67,22 +67,79 @@ const CodeTerminal = () => {
     
     const compileMessage = `[${language.toUpperCase()}] Compiling code...\n`;
     const runtimeMessage = `[${language.toUpperCase()}] Executing program...\n`;
-    let outputMessage = "";
+    
+    const executeCode = () => {
+      try {
+        let result = "";
+        
+        switch (language) {
+          case "python":
+            if (code.includes("print")) {
+              const printMatches = code.match(/print\((.*?)\)/g);
+              if (printMatches) {
+                result = printMatches
+                  .map(match => {
+                    const content = match.substring(6, match.length - 1);
+                    return content.startsWith('"') || content.startsWith("'") 
+                      ? content.slice(1, -1) 
+                      : eval(content);
+                  })
+                  .join("\n");
+              }
+            } else if (code.trim()) {
+              result = String(eval(code));
+            }
+            break;
+            
+          case "java":
+            if (code.includes("System.out.println")) {
+              const printMatches = code.match(/System\.out\.println\((.*?)\)/g);
+              if (printMatches) {
+                result = printMatches
+                  .map(match => {
+                    const content = match.substring(19, match.length - 1);
+                    return content.startsWith('"') ? content.slice(1, -1) : eval(content);
+                  })
+                  .join("\n");
+              }
+            }
+            break;
+            
+          case "c":
+          case "cpp":
+            if (code.includes("printf") || code.includes("cout")) {
+              const printfMatches = code.match(/printf\((.*?)\)/g);
+              const coutMatches = code.match(/cout\s*<<\s*(.*?);/g);
+              
+              if (printfMatches) {
+                result = printfMatches
+                  .map(match => {
+                    const content = match.substring(7, match.length - 1);
+                    return content.startsWith('"') ? content.slice(1, -1) : eval(content);
+                  })
+                  .join("\n");
+              } else if (coutMatches) {
+                result = coutMatches
+                  .map(match => {
+                    const content = match.split('<<')[1].trim().slice(0, -1);
+                    return content.startsWith('"') ? content.slice(1, -1) : eval(content);
+                  })
+                  .join("\n");
+              }
+            }
+            break;
+        }
+        
+        return result;
+      } catch (error) {
+        return `Runtime Error: ${error.message}`;
+      }
+    };
 
-    switch (language) {
-      case "python":
-        outputMessage = `${compileMessage}>>> ${code}\n\nOutput:\n${code}`;
-        break;
-      case "java":
-        outputMessage = `${compileMessage}javac Main.java\n${runtimeMessage}java Main\n\nOutput:\n${code}`;
-        break;
-      case "c":
-      case "cpp":
-        outputMessage = `${compileMessage}g++ -o program main.cpp\n${runtimeMessage}./program\n\nOutput:\n${code}`;
-        break;
-    }
-
+    const result = executeCode();
+    const outputMessage = `${compileMessage}${runtimeMessage}\nOutput:\n${result}`;
     setOutput(outputMessage);
+    
     setTimeout(() => setIsRunning(false), 1000);
   };
 
