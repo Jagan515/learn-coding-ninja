@@ -1,7 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { CourseCategory } from "@/types/course";
 
 export const useCourseCategories = () => {
   return useQuery({
@@ -12,12 +11,8 @@ export const useCourseCategories = () => {
         .select("*")
         .order("order_index");
 
-      if (error) {
-        console.error("Error fetching course categories:", error);
-        throw error;
-      }
-
-      return data as CourseCategory[];
+      if (error) throw error;
+      return data;
     },
   });
 };

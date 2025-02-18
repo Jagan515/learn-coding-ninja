@@ -5,7 +5,6 @@ import { useCourses } from "@/hooks/useCourses";
 import { useCourseCategories } from "@/hooks/useCourseCategories";
 import Navbar from "@/components/Navbar";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import CourseCard from "@/components/CourseCard";
 import { 
   Select,
@@ -14,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, BookOpen, GraduationCap } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -34,15 +33,6 @@ const Courses = () => {
     const matchesCategory = selectedCategory === "all" || course.category?.id === selectedCategory;
     return matchesSearch && matchesCategory;
   });
-
-  // Group courses by difficulty level
-  const coursesGroupedByDifficulty = filteredCourses.reduce((acc, course) => {
-    if (!acc[course.difficulty]) {
-      acc[course.difficulty] = [];
-    }
-    acc[course.difficulty].push(course);
-    return acc;
-  }, {} as Record<string, typeof courses>);
 
   if (isLoadingCourses || isLoadingCategories) {
     return (
@@ -102,33 +92,24 @@ const Courses = () => {
           </Select>
         </div>
 
-        {/* Course Sections by Difficulty */}
-        <div className="space-y-12">
-          {Object.entries(coursesGroupedByDifficulty).map(([difficulty, courses]) => (
-            <section key={difficulty} className="space-y-6">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-semibold capitalize">
-                  {difficulty} Courses
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {courses.map((course) => (
-                  <CourseCard
-                    key={course.id}
-                    id={course.id}
-                    title={course.title}
-                    description={course.description}
-                    level={course.difficulty}
-                    duration={`${course.estimated_hours}h`}
-                    progress={0}
-                    lessons={24}
-                    language={course.programming_language}
-                    onClick={() => handleCourseClick(course.id)}
-                  />
-                ))}
-              </div>
-            </section>
+        {/* Course Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredCourses.map((course) => (
+            <CourseCard
+              key={course.id}
+              id={course.id}
+              title={course.title}
+              description={course.description}
+              level={course.difficulty}
+              duration={`${course.estimated_hours}h`}
+              progress={0}
+              lessons={course.course_sections?.reduce(
+                (acc, section) => acc + (section.lessons?.length || 0),
+                0
+              ) || 0}
+              language={course.programming_language}
+              onClick={() => handleCourseClick(course.id)}
+            />
           ))}
         </div>
 
@@ -148,3 +129,4 @@ const Courses = () => {
 };
 
 export default Courses;
+
