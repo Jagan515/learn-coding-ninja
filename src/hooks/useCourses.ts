@@ -19,6 +19,13 @@ export const useCourses = () => {
             title,
             description,
             parent_id
+          ),
+          course_sections (
+            id,
+            title,
+            lessons (
+              id
+            )
           )
         `)
         .eq("is_published", true);
