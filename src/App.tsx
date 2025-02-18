@@ -13,6 +13,7 @@ import Terminal from "./pages/Terminal";
 import NotFound from "./pages/NotFound";
 import CourseDetails from "./pages/CourseDetails";
 import Courses from "./pages/Courses";
+import Practice from "./pages/Practice";
 
 const queryClient = new QueryClient();
 
@@ -49,7 +50,7 @@ const App = () => (
                 path="/practice"
                 element={
                   <ProtectedRoute>
-                    <div>Practice page (coming soon)</div>
+                    <Practice />
                   </ProtectedRoute>
                 }
               />
