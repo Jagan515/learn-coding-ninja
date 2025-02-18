@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import CourseProgress from "@/components/CourseProgress";
+import ChatInterface from "@/components/ChatInterface";
 import { Book } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -125,6 +126,18 @@ const CourseDetails = () => {
                     </ul>
                   </div>
                 ))}
+            </div>
+
+            {/* Chat Interface */}
+            <div className="mt-8">
+              <h2 className="text-2xl font-semibold mb-4">Course Assistant</h2>
+              <ChatInterface 
+                courseContext={{
+                  title: course.title,
+                  description: course.description,
+                  currentSection: course.course_sections?.[0]?.title
+                }}
+              />
             </div>
           </div>
 
