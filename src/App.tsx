@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Terminal from "./pages/Terminal";
 import NotFound from "./pages/NotFound";
 import CourseDetails from "./pages/CourseDetails";
+import Courses from "./pages/Courses";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/courses" element={<Courses />} />
               <Route path="/courses/:courseId" element={<CourseDetails />} />
               <Route
                 path="/dashboard"
@@ -59,7 +61,6 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
-              <Route path="/courses" element={<div>Courses page (coming soon)</div>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
