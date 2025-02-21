@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import { Input } from "@/components/ui/input";
 import CourseCard from "@/components/CourseCard";
 import GoalsSetting from "@/components/GoalsSetting";
+import ChatInterface from "@/components/ChatInterface";
 import { 
   Select,
   SelectContent,
@@ -64,17 +65,19 @@ const Courses = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Goals Section */}
-          <div className="lg:col-span-1">
-            <div className="bg-card rounded-lg p-6 shadow-sm sticky top-8">
-              <h2 className="text-xl font-semibold mb-4">Learning Goals</h2>
-              <GoalsSetting />
+          <div className="lg:col-span-3">
+            <div className="space-y-6">
+              <div className="bg-card rounded-lg p-6 shadow-sm sticky top-8">
+                <h2 className="text-xl font-semibold mb-4">Learning Goals</h2>
+                <GoalsSetting />
+              </div>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
+          <div className="lg:col-span-6 space-y-8">
             {/* Enhanced Search and Filter Section */}
             <div className="bg-card rounded-lg p-6 shadow-sm animate-slideIn">
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
@@ -109,8 +112,8 @@ const Courses = () => {
               </div>
             </div>
 
-            {/* Enhanced Course Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slideIn">
+            {/* Course Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-slideIn">
               {filteredCourses.map((course) => (
                 <CourseCard
                   key={course.id}
@@ -130,7 +133,7 @@ const Courses = () => {
               ))}
             </div>
 
-            {/* Enhanced Empty State */}
+            {/* Empty State */}
             {filteredCourses.length === 0 && (
               <div className="text-center py-12 space-y-4 bg-card rounded-lg shadow-sm animate-fadeIn">
                 <BookOpen className="h-12 w-12 text-muted-foreground mx-auto" />
@@ -140,6 +143,18 @@ const Courses = () => {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Chat Interface Section */}
+          <div className="lg:col-span-3">
+            <div className="sticky top-8">
+              <ChatInterface 
+                courseContext={{
+                  title: "Course Assistance",
+                  description: "Get help with finding the right course for you"
+                }}
+              />
+            </div>
           </div>
         </div>
       </main>
