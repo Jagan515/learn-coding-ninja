@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Book, Clock, Code } from "lucide-react";
+import { Book, Clock, Code, GraduationCap, Users } from "lucide-react";
 
 interface CourseCardProps {
   id: string;
@@ -38,18 +38,34 @@ const CourseCard = ({
     }
   };
 
+  const getLevelIcon = (level: string) => {
+    switch (level) {
+      case "beginner":
+        return <GraduationCap className="w-4 h-4" />;
+      case "intermediate":
+        return <Users className="w-4 h-4" />;
+      case "advanced":
+        return <Code className="w-4 h-4" />;
+      default:
+        return <GraduationCap className="w-4 h-4" />;
+    }
+  };
+
   return (
     <Card 
-      className="card-hover cursor-pointer overflow-hidden" 
+      className="card-hover cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-lg" 
       onClick={onClick}
     >
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-between">
-          <span 
-            className={`text-xs font-medium px-2.5 py-0.5 rounded ${getLevelColor(level)}`}
-          >
-            {level}
-          </span>
+          <div className="flex items-center gap-2">
+            {getLevelIcon(level)}
+            <span 
+              className={`text-xs font-medium px-2.5 py-0.5 rounded ${getLevelColor(level)}`}
+            >
+              {level}
+            </span>
+          </div>
           <div className="flex items-center text-sm text-muted-foreground">
             <Clock className="w-4 h-4 mr-1" />
             {duration}
@@ -58,8 +74,8 @@ const CourseCard = ({
         <h3 className="text-xl font-semibold tracking-tight">{title}</h3>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">{description}</p>
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
+        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Book className="w-4 h-4" />
             <span>{lessons} lessons</span>
