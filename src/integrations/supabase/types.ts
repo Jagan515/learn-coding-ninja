@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      challenges: {
+        Row: {
+          created_at: string | null
+          description: string
+          difficulty: string
+          estimated_time: string
+          id: string
+          initial_code: string | null
+          programming_language: string
+          test_cases: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          difficulty: string
+          estimated_time: string
+          id?: string
+          initial_code?: string | null
+          programming_language: string
+          test_cases?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          difficulty?: string
+          estimated_time?: string
+          id?: string
+          initial_code?: string | null
+          programming_language?: string
+          test_cases?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       content_progress: {
         Row: {
           attempts: number | null
@@ -393,6 +432,44 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      user_challenge_progress: {
+        Row: {
+          challenge_id: string
+          code: string | null
+          completed_at: string | null
+          id: string
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          code?: string | null
+          completed_at?: string | null
+          id?: string
+          started_at?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          code?: string | null
+          completed_at?: string | null
+          id?: string
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
