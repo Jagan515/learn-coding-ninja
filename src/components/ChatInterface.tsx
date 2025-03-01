@@ -53,24 +53,34 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
     try {
       console.log("Sending message to chat function:", userMessage);
       
-      const { data, error } = await supabase.functions.invoke<{ message: string, error?: string }>(
+      // Send the last 5 messages as context to maintain a meaningful conversation
+      const chatHistory = messages.slice(-5).map(msg => ({ 
+        role: msg.role, 
+        content: msg.content 
+      }));
+      
+      const { data, error } = await supabase.functions.invoke<{ 
+        message: string; 
+        error?: string;
+        usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+      }>(
         "chat-completion",
         {
           body: {
             message: userMessage,
             context: courseContext,
-            history: messages.slice(-5).map(msg => ({ role: msg.role, content: msg.content }))
+            history: chatHistory
           }
         }
       );
 
       if (error) {
-        console.error("Chat function error:", error);
-        throw error;
+        console.error("Supabase function error:", error);
+        throw new Error(`Function error: ${error.message}`);
       }
 
       if (data?.error) {
-        console.error("Chat function returned error:", data.error);
+        console.error("Chat completion returned error:", data.error);
         throw new Error(data.error);
       }
 
@@ -79,6 +89,10 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
       }
 
       console.log("Received response from chat function:", data);
+      
+      if (data.usage) {
+        console.log("Token usage:", data.usage);
+      }
 
       setMessages(prev => [
         ...prev,
@@ -128,6 +142,13 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
     }
   };
 
+  const clearChat = () => {
+    setMessages([]);
+    setError(null);
+    setInput("");
+    inputRef.current?.focus();
+  };
+
   return (
     <div className="flex flex-col h-[500px] border rounded-lg overflow-hidden bg-white dark:bg-card shadow-sm">
       <div className="p-4 border-b bg-muted/50 flex items-center justify-between">
@@ -139,10 +160,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => {
-              setMessages([]);
-              setError(null);
-            }}
+            onClick={clearChat}
             className="h-8 px-2 text-xs"
           >
             Clear chat
