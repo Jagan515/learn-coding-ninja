@@ -55,7 +55,7 @@ const Courses = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <main className="container mx-auto px-4 py-8">
-        {/* Enhanced Header Section */}
+        {/* Header Section */}
         <div className="text-center space-y-4 mb-12 animate-fadeIn">
           <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
             Explore Our Programming Courses
@@ -78,8 +78,8 @@ const Courses = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-6 space-y-8">
-            {/* Enhanced Search and Filter Section */}
-            <div className="bg-card rounded-lg p-6 shadow-sm animate-slideIn">
+            {/* Search and Filter Section */}
+            <div className="bg-card rounded-lg p-6 shadow-sm">
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div className="relative w-full sm:w-96">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -113,36 +113,35 @@ const Courses = () => {
             </div>
 
             {/* Course Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-slideIn">
-              {filteredCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  id={course.id}
-                  title={course.title}
-                  description={course.description}
-                  level={course.difficulty}
-                  duration={`${course.estimated_hours}h`}
-                  progress={0}
-                  lessons={course.course_sections?.reduce(
-                    (acc, section) => acc + (section.lessons?.length || 0),
-                    0
-                  ) || 0}
-                  language={course.programming_language}
-                  onClick={() => handleCourseClick(course.id)}
-                />
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {filteredCourses.length > 0 ? (
+                filteredCourses.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    id={course.id}
+                    title={course.title}
+                    description={course.description}
+                    level={course.difficulty}
+                    duration={`${course.estimated_hours}h`}
+                    progress={0}
+                    lessons={course.course_sections?.reduce(
+                      (acc, section) => acc + (section.lessons?.length || 0),
+                      0
+                    ) || 0}
+                    language={course.programming_language}
+                    onClick={() => handleCourseClick(course.id)}
+                  />
+                ))
+              ) : (
+                <div className="col-span-2 text-center py-12 space-y-4 bg-card rounded-lg shadow-sm">
+                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto" />
+                  <h3 className="text-xl font-semibold">No courses found</h3>
+                  <p className="text-muted-foreground">
+                    Try adjusting your search or filter criteria
+                  </p>
+                </div>
+              )}
             </div>
-
-            {/* Empty State */}
-            {filteredCourses.length === 0 && (
-              <div className="text-center py-12 space-y-4 bg-card rounded-lg shadow-sm animate-fadeIn">
-                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto" />
-                <h3 className="text-xl font-semibold">No courses found</h3>
-                <p className="text-muted-foreground">
-                  Try adjusting your search or filter criteria
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Chat Interface Section */}
