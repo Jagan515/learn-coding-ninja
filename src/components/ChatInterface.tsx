@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { ScrollArea } from "./ui/scroll-area";
-import { MessageSquare, Loader2, Bot, Send, User } from "lucide-react";
+import { MessageSquare, Loader2, Bot, Send, User, XCircle, RefreshCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -25,6 +25,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -45,19 +46,20 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
 
     const userMessage = input.trim();
     setInput("");
+    setError(null);
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
     try {
       console.log("Sending message to chat function:", userMessage);
       
-      const { data, error } = await supabase.functions.invoke<{ message: string }>(
+      const { data, error } = await supabase.functions.invoke<{ message: string, error?: string }>(
         "chat-completion",
         {
           body: {
             message: userMessage,
             context: courseContext,
-            history: messages.slice(-5) // Send last 5 messages for context
+            history: messages.slice(-5).map(msg => ({ role: msg.role, content: msg.content }))
           }
         }
       );
@@ -65,6 +67,11 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
       if (error) {
         console.error("Chat function error:", error);
         throw error;
+      }
+
+      if (data?.error) {
+        console.error("Chat function returned error:", data.error);
+        throw new Error(data.error);
       }
 
       if (!data?.message) {
@@ -79,18 +86,17 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
       ]);
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages(prev => [
-        ...prev,
-        { 
-          role: "assistant", 
-          content: "I'm sorry, I'm having trouble responding right now. Please try again later." 
-        }
-      ]);
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to get a response. Please try again.";
+      
+      setError(errorMessage);
       
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to get a response. Please try again.",
+        title: "Chat Error",
+        description: "We couldn't connect to our assistant. Please try again later.",
       });
     } finally {
       setIsLoading(false);
@@ -101,6 +107,24 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
+    }
+  };
+
+  const retryLastMessage = () => {
+    if (messages.length === 0) return;
+    
+    // Find the last user message
+    const lastUserMessageIndex = [...messages].reverse().findIndex(m => m.role === "user");
+    
+    if (lastUserMessageIndex === -1) return;
+    
+    const lastUserMessage = messages[messages.length - 1 - lastUserMessageIndex];
+    setInput(lastUserMessage.content);
+    
+    // Remove the last failed assistant message if it exists
+    if (error) {
+      setMessages(prev => prev.filter((_, i) => i !== prev.length - 1));
+      setError(null);
     }
   };
 
@@ -115,7 +139,10 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => setMessages([])}
+            onClick={() => {
+              setMessages([]);
+              setError(null);
+            }}
             className="h-8 px-2 text-xs"
           >
             Clear chat
@@ -138,12 +165,12 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
               <div
                 key={index}
                 className={cn(
-                  "flex gap-2",
+                  "flex gap-3",
                   message.role === "assistant" ? "items-start" : "items-start flex-row-reverse"
                 )}
               >
                 <div className={cn(
-                  "flex items-center justify-center h-8 w-8 rounded-full",
+                  "flex items-center justify-center h-8 w-8 rounded-full shrink-0",
                   message.role === "assistant" 
                     ? "bg-primary/10 text-primary" 
                     : "bg-muted text-foreground"
@@ -156,7 +183,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
                 </div>
                 <div
                   className={cn(
-                    "max-w-[75%] rounded-lg p-3",
+                    "max-w-[80%] rounded-lg p-3",
                     message.role === "assistant"
                       ? "bg-muted text-foreground"
                       : "bg-primary text-primary-foreground"
@@ -167,6 +194,49 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
               </div>
             ))
           )}
+
+          {/* Error state with retry button */}
+          {error && (
+            <div className="flex items-start gap-3">
+              <div className="flex items-center justify-center h-8 w-8 rounded-full bg-destructive/10 text-destructive shrink-0">
+                <XCircle className="h-4 w-4" />
+              </div>
+              <div className="flex flex-col gap-2 max-w-[80%]">
+                <div className="bg-destructive/10 text-destructive rounded-lg p-3">
+                  <p className="text-sm font-medium">Connection Error</p>
+                  <p className="text-xs mt-1">
+                    We couldn't connect to our assistant. Please check your connection and try again.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-fit" 
+                  onClick={retryLastMessage}
+                >
+                  <RefreshCcw className="h-3 w-3 mr-2" /> 
+                  Try again
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="flex items-start gap-3">
+              <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary shrink-0">
+                <Bot className="h-4 w-4" />
+              </div>
+              <div className="bg-muted text-foreground rounded-lg p-3">
+                <div className="flex gap-1 items-center">
+                  <div className="h-2 w-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="h-2 w-2 bg-primary/60 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="h-2 w-2 bg-primary/60 rounded-full animate-bounce"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>

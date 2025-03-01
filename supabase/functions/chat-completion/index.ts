@@ -1,13 +1,16 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.32.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const supabaseUrl = Deno.env.get('SUPABASE_URL');
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -16,62 +19,85 @@ serve(async (req) => {
   }
 
   try {
-    const { message, context, history } = await req.json();
-
-    // Prepare the system message with course context
-    const systemMessage = `You are a helpful AI teaching assistant for the course "${context.title}". 
-    Course description: ${context.description}
-    Current section: ${context.currentSection || 'Not specified'}
+    // Get the request body
+    const { message, context, history = [] } = await req.json();
     
-    Provide clear, concise, and accurate responses to questions about this course. 
-    If you're unsure about something, admit it and suggest where the user might find more information.`;
+    console.log("Received request with message:", message);
+    console.log("Context:", context);
+    
+    if (!message) {
+      throw new Error("No message provided");
+    }
 
-    // Prepare the conversation history
+    if (!openAIApiKey) {
+      throw new Error("OPENAI_API_KEY is not set");
+    }
+
+    // Create a system message based on the course context
+    const contextDescription = context 
+      ? `You are a helpful assistant for the ${context.title} course. ${context.description || ''} ${context.currentSection ? `The user is currently in the ${context.currentSection} section.` : ''}`
+      : "You are a helpful programming course assistant. Answer questions about programming, coding, and learning to code.";
+
+    // Prepare messages for OpenAI, including context and history
     const messages = [
-      { role: "system", content: systemMessage },
-      ...history.map((msg: { role: string; content: string }) => ({
-        role: msg.role,
-        content: msg.content,
-      })),
-      { role: "user", content: message },
+      { role: "system", content: contextDescription },
+      ...history,
+      { role: "user", content: message }
     ];
 
-    console.log("Sending request to OpenAI with messages:", JSON.stringify(messages));
-
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    // Make a request to OpenAI API
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openAIApiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: "gpt-4o-mini",
         messages: messages,
         temperature: 0.7,
-        max_tokens: 500,
-      }),
+        max_tokens: 1000,
+      })
     });
 
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${response.status} ${errorData}`);
+      const error = await response.json();
+      console.error("OpenAI API error:", error);
+      throw new Error(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
     }
 
     const data = await response.json();
-    console.log("Received response from OpenAI:", JSON.stringify(data));
-    
+    const assistantResponse = data.choices[0]?.message?.content;
+
+    if (!assistantResponse) {
+      throw new Error("No response generated from the assistant");
+    }
+
+    console.log("Generated response:", assistantResponse.substring(0, 50) + "...");
+
+    // Return the assistant's response
     return new Response(
-      JSON.stringify({ message: data.choices[0].message.content }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ message: assistantResponse }),
+      { 
+        headers: { 
+          ...corsHeaders,
+          "Content-Type": "application/json" 
+        }
+      }
     );
   } catch (error) {
-    console.error('Error in chat-completion function:', error);
+    console.error("Error in chat-completion function:", error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || "An error occurred during the chat completion process"
+      }),
       { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        status: 500, 
+        headers: { 
+          ...corsHeaders,
+          "Content-Type": "application/json" 
+        }
       }
     );
   }
