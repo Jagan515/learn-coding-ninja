@@ -36,6 +36,8 @@ serve(async (req) => {
       { role: "user", content: message },
     ];
 
+    console.log("Sending request to OpenAI with messages:", JSON.stringify(messages));
+
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -50,7 +52,15 @@ serve(async (req) => {
       }),
     });
 
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('OpenAI API error:', errorData);
+      throw new Error(`OpenAI API error: ${response.status} ${errorData}`);
+    }
+
     const data = await response.json();
+    console.log("Received response from OpenAI:", JSON.stringify(data));
+    
     return new Response(
       JSON.stringify({ message: data.choices[0].message.content }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
