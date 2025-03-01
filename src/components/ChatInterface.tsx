@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { ScrollArea } from "./ui/scroll-area";
-import { MessageSquare, Loader2, Bot, Send, User, XCircle, RefreshCcw } from "lucide-react";
+import { MessageSquare, Loader2, Bot, Send, User, XCircle, RefreshCcw, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -26,6 +26,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<"connection" | "quota" | "general">("general");
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -47,6 +48,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
     const userMessage = input.trim();
     setInput("");
     setError(null);
+    setErrorType("general");
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
@@ -81,6 +83,13 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
 
       if (data?.error) {
         console.error("Chat completion returned error:", data.error);
+        
+        // Check for quota exceeded error
+        if (data.error.includes("exceeded your current quota") || data.error.includes("billing details")) {
+          setErrorType("quota");
+          throw new Error("The AI service is currently unavailable due to quota limitations. Please try again later.");
+        }
+        
         throw new Error(data.error);
       }
 
@@ -107,10 +116,19 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
       
       setError(errorMessage);
       
+      // Set correct error type
+      if (errorMessage.includes("quota") || errorMessage.includes("billing")) {
+        setErrorType("quota");
+      } else {
+        setErrorType("connection");
+      }
+      
       toast({
         variant: "destructive",
         title: "Chat Error",
-        description: "We couldn't connect to our assistant. Please try again later.",
+        description: errorType === "quota" 
+          ? "Our AI service is temporarily unavailable. Please try again later." 
+          : "We couldn't connect to our assistant. Please try again later.",
       });
     } finally {
       setIsLoading(false);
@@ -139,12 +157,14 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
     if (error) {
       setMessages(prev => prev.filter((_, i) => i !== prev.length - 1));
       setError(null);
+      setErrorType("general");
     }
   };
 
   const clearChat = () => {
     setMessages([]);
     setError(null);
+    setErrorType("general");
     setInput("");
     inputRef.current?.focus();
   };
@@ -217,13 +237,23 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
           {error && (
             <div className="flex items-start gap-3">
               <div className="flex items-center justify-center h-8 w-8 rounded-full bg-destructive/10 text-destructive shrink-0">
-                <XCircle className="h-4 w-4" />
+                {errorType === "quota" ? (
+                  <AlertCircle className="h-4 w-4" />
+                ) : (
+                  <XCircle className="h-4 w-4" />
+                )}
               </div>
               <div className="flex flex-col gap-2 max-w-[80%]">
                 <div className="bg-destructive/10 text-destructive rounded-lg p-3">
-                  <p className="text-sm font-medium">Connection Error</p>
+                  <p className="text-sm font-medium">
+                    {errorType === "quota" 
+                      ? "Service Temporarily Unavailable" 
+                      : "Connection Error"}
+                  </p>
                   <p className="text-xs mt-1">
-                    We couldn't connect to our assistant. Please check your connection and try again.
+                    {errorType === "quota"
+                      ? "Our AI assistant is currently unavailable. The team has been notified and is working to restore service."
+                      : "We couldn't connect to our assistant. Please check your connection and try again."}
                   </p>
                 </div>
                 <Button 
@@ -268,9 +298,9 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
             onKeyDown={handleKeyDown}
             placeholder="Ask a question about the course..."
             className="min-h-[60px] resize-none"
-            disabled={isLoading}
+            disabled={isLoading || errorType === "quota"}
           />
-          <Button type="submit" size="icon" disabled={isLoading}>
+          <Button type="submit" size="icon" disabled={isLoading || errorType === "quota"}>
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
