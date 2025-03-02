@@ -14,6 +14,9 @@ import NotFound from "./pages/NotFound";
 import CourseDetails from "./pages/CourseDetails";
 import Courses from "./pages/Courses";
 import Practice from "./pages/Practice";
+import Discussion from "./pages/Discussion";
+import ThreadDetail from "./pages/ThreadDetail";
+import NewThread from "./pages/NewThread";
 
 const queryClient = new QueryClient();
 
@@ -58,7 +61,23 @@ const App = () => (
                 path="/discussion"
                 element={
                   <ProtectedRoute>
-                    <div>Discussion page (coming soon)</div>
+                    <Discussion />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/discussion/:threadId"
+                element={
+                  <ProtectedRoute>
+                    <ThreadDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/discussion/new"
+                element={
+                  <ProtectedRoute>
+                    <NewThread />
                   </ProtectedRoute>
                 }
               />
