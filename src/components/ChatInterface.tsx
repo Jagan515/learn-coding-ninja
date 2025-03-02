@@ -127,8 +127,8 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
         variant: "destructive",
         title: "Chat Error",
         description: errorType === "quota" 
-          ? "Our AI service is temporarily unavailable. Please try again later." 
-          : "We couldn't connect to our assistant. Please try again later.",
+          ? "Our AI service is temporarily unavailable due to usage limits. Please try again later." 
+          : "We couldn't connect to our assistant. Please check your connection and try again.",
       });
     } finally {
       setIsLoading(false);
