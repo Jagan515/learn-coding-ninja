@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Message } from "@/types/discussion";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MessageItemProps {
   message: Message;
@@ -28,13 +30,65 @@ const MessageItem = ({
 }: MessageItemProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
 
   const canDelete = currentUserId === message.userId;
   const hasReplies = replies.length > 0;
 
-  const handleDelete = () => {
-    onDelete(message.id);
-    setIsDeleteDialogOpen(false);
+  const handleDelete = async () => {
+    if (!canDelete) {
+      toast({
+        title: "Permission denied",
+        description: "You can only delete your own messages",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      // Delete from Supabase
+      const { error } = await supabase
+        .from('discussion_messages')
+        .delete()
+        .eq('id', message.id);
+        
+      if (error) {
+        throw error;
+      }
+
+      onDelete(message.id);
+      toast({
+        title: "Message deleted",
+        description: "Your message has been successfully deleted",
+      });
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete message. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  const handleLikeMessage = async () => {
+    try {
+      // We'd typically update this in the database first
+      // For now, we'll just update the UI and add the database part later
+      onLike(message.id);
+    } catch (error) {
+      console.error("Error liking message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to like message. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -81,7 +135,7 @@ const MessageItem = ({
               variant="ghost"
               size="sm"
               className="flex items-center gap-1 h-8 px-2"
-              onClick={() => onLike(message.id)}
+              onClick={handleLikeMessage}
             >
               <ThumbsUp className="h-4 w-4" />
               <span>{message.likes}</span>
@@ -139,11 +193,11 @@ const MessageItem = ({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} disabled={isDeleting}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              {isDeleting ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
