@@ -2,7 +2,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,8 +16,8 @@ serve(async (req) => {
   }
 
   try {
-    if (!openAIApiKey) {
-      throw new Error('Missing OpenAI API key. Please set the OPENAI_API_KEY in your Supabase secrets.');
+    if (!geminiApiKey) {
+      throw new Error('Missing Gemini API key. Please set the GEMINI_API_KEY in your Supabase secrets.');
     }
 
     const { message, context, history = [] } = await req.json();
@@ -40,38 +40,46 @@ serve(async (req) => {
       systemContent += '\n\nProvide helpful, educational responses related to this context when possible.';
     }
 
-    // Prepare the messages array for OpenAI
-    const messages = [
-      { role: 'system', content: systemContent },
-      ...history,
-      { role: 'user', content: message }
+    // Format the history for Gemini (converting from OpenAI format)
+    const formattedHistory = history.map(msg => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }));
+
+    // Prepare the messages array for Gemini
+    const geminiPrompt = [
+      { role: 'user', parts: [{ text: systemContent }] },
+      ...formattedHistory,
+      { role: 'user', parts: [{ text: message }] }
     ];
 
-    console.log('Sending request to OpenAI with messages:', JSON.stringify(messages));
+    console.log('Sending request to Gemini API');
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using a cost-effective model
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 800,
+        contents: geminiPrompt,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 800,
+        },
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
+      console.error('Gemini API error:', errorData);
       
       // Check for quota exceeded errors
-      if (errorData.error?.message?.includes('quota') || errorData.error?.message?.includes('billing')) {
+      if (errorData.error?.message?.includes('quota') || 
+          errorData.error?.message?.includes('billing') || 
+          errorData.error?.message?.includes('limit')) {
         return new Response(
           JSON.stringify({ 
-            error: `OpenAI API error: ${errorData.error?.message}`,
+            error: `Gemini API error: ${errorData.error?.message}`,
             message: 'I apologize, but our AI service is temporarily unavailable. The team has been notified and is working to restore service.' 
           }),
           { 
@@ -85,22 +93,31 @@ serve(async (req) => {
         );
       }
       
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+      throw new Error(`Gemini API error: ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
-    console.log('Received response from OpenAI:', JSON.stringify(data));
+    console.log('Received response from Gemini:', JSON.stringify(data));
 
-    if (!data.choices || data.choices.length === 0) {
-      throw new Error('Invalid response from OpenAI API');
+    if (!data.candidates || data.candidates.length === 0) {
+      throw new Error('Invalid response from Gemini API');
     }
 
-    const assistantMessage = data.choices[0].message.content;
+    // Extract the assistant's message from Gemini response
+    const assistantMessage = data.candidates[0].content.parts[0].text;
+
+    // Calculate token usage (Gemini doesn't provide this directly, so we'll estimate)
+    const usage = {
+      prompt_tokens: Math.ceil(JSON.stringify(geminiPrompt).length / 4), // Rough estimate
+      completion_tokens: Math.ceil(assistantMessage.length / 4), // Rough estimate
+      total_tokens: 0 // Will be calculated below
+    };
+    usage.total_tokens = usage.prompt_tokens + usage.completion_tokens;
 
     return new Response(
       JSON.stringify({ 
         message: assistantMessage,
-        usage: data.usage
+        usage: usage
       }),
       { 
         headers: { 
@@ -114,7 +131,7 @@ serve(async (req) => {
     
     // Check if the error is quota-related
     const errorMessage = error.message || 'An error occurred while processing your request';
-    const isQuotaError = errorMessage.includes('quota') || errorMessage.includes('billing');
+    const isQuotaError = errorMessage.includes('quota') || errorMessage.includes('billing') || errorMessage.includes('limit');
     
     return new Response(
       JSON.stringify({ 

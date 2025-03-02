@@ -85,7 +85,9 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
         console.error("Chat completion returned error:", data.error);
         
         // Check for quota exceeded error
-        if (data.error.includes("exceeded your current quota") || data.error.includes("billing details")) {
+        if (data.error.includes("quota") || 
+            data.error.includes("billing") || 
+            data.error.includes("limit")) {
           setErrorType("quota");
           throw new Error("The AI service is currently unavailable due to quota limitations. Please try again later.");
         }
@@ -117,7 +119,9 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
       setError(errorMessage);
       
       // Set correct error type
-      if (errorMessage.includes("quota") || errorMessage.includes("billing")) {
+      if (errorMessage.includes("quota") || 
+          errorMessage.includes("billing") || 
+          errorMessage.includes("limit")) {
         setErrorType("quota");
       } else {
         setErrorType("connection");
@@ -174,7 +178,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
       <div className="p-4 border-b bg-muted/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Course Assistant</h3>
+          <h3 className="font-semibold">Course Assistant (Gemini AI)</h3>
         </div>
         {messages.length > 0 && (
           <Button 
