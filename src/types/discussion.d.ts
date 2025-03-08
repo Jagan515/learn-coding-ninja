@@ -4,15 +4,13 @@ export interface Thread {
   title: string;
   category: string;
   courseId?: string;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  participantCount: number;
-  replyCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  authorName: string;
+  authorAvatar?: string | null;
+  messageCount: number;
+  lastActivity: Date;
   isPinned: boolean;
   isLocked: boolean;
 }
@@ -21,19 +19,23 @@ export interface Message {
   id: string;
   threadId: string;
   content: string;
-  createdAt: string;
-  updatedAt?: string;
+  createdAt: Date;
+  updatedAt: Date;
   userId: string;
   userName: string;
-  userAvatar?: string;
-  parentId?: string;
+  userAvatar: string | null;
+  parentId: string | null;
   likes: number;
   isEdited: boolean;
 }
 
-export interface ThreadCategory {
+export type MessageFormData = {
+  content: string;
+  parentId?: string | null;
+};
+
+export type Category = {
   id: string;
   name: string;
-  description?: string;
   color?: string;
-}
+};
