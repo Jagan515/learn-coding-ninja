@@ -13,6 +13,8 @@ export interface Thread {
   lastActivity: Date;
   isPinned: boolean;
   isLocked: boolean;
+  replyCount: number;
+  participantCount: number;
 }
 
 export interface Message {
@@ -38,4 +40,11 @@ export type Category = {
   id: string;
   name: string;
   color?: string;
+};
+
+export type ThreadCategory = {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
 };

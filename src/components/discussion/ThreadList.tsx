@@ -12,13 +12,13 @@ const mockThreads: Thread[] = [
     id: "1",
     title: "What are the best practices for React state management?",
     category: "React",
-    createdAt: "2023-10-15T10:30:00Z",
-    updatedAt: "2023-10-16T14:25:00Z",
-    createdBy: {
-      id: "user1",
-      name: "Jane Doe",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane"
-    },
+    createdAt: new Date("2023-10-15T10:30:00Z"),
+    updatedAt: new Date("2023-10-16T14:25:00Z"),
+    createdBy: "user1",
+    authorName: "Jane Doe",
+    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
+    messageCount: 15,
+    lastActivity: new Date("2023-10-16T14:25:00Z"),
     participantCount: 8,
     replyCount: 15,
     isPinned: true,
@@ -28,13 +28,13 @@ const mockThreads: Thread[] = [
     id: "2",
     title: "Understanding Python decorators - a comprehensive guide",
     category: "Python",
-    createdAt: "2023-10-14T09:15:00Z",
-    updatedAt: "2023-10-15T11:40:00Z",
-    createdBy: {
-      id: "user2",
-      name: "John Smith",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John"
-    },
+    createdAt: new Date("2023-10-14T09:15:00Z"),
+    updatedAt: new Date("2023-10-15T11:40:00Z"),
+    createdBy: "user2",
+    authorName: "John Smith",
+    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
+    messageCount: 9,
+    lastActivity: new Date("2023-10-15T11:40:00Z"),
     participantCount: 5,
     replyCount: 9,
     isPinned: false,
@@ -44,13 +44,13 @@ const mockThreads: Thread[] = [
     id: "3",
     title: "Algorithms for beginners: Sorting algorithms explained",
     category: "Algorithms",
-    createdAt: "2023-10-13T15:45:00Z",
-    updatedAt: "2023-10-14T08:30:00Z",
-    createdBy: {
-      id: "user3",
-      name: "Alex Johnson",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex"
-    },
+    createdAt: new Date("2023-10-13T15:45:00Z"),
+    updatedAt: new Date("2023-10-14T08:30:00Z"),
+    createdBy: "user3",
+    authorName: "Alex Johnson",
+    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+    messageCount: 23,
+    lastActivity: new Date("2023-10-14T08:30:00Z"),
     participantCount: 12,
     replyCount: 23,
     isPinned: false,
@@ -60,13 +60,13 @@ const mockThreads: Thread[] = [
     id: "4",
     title: "JavaScript async/await vs Promises - what to use when?",
     category: "JavaScript",
-    createdAt: "2023-10-12T11:20:00Z",
-    updatedAt: "2023-10-13T16:10:00Z",
-    createdBy: {
-      id: "user4",
-      name: "Sam Wilson",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam"
-    },
+    createdAt: new Date("2023-10-12T11:20:00Z"),
+    updatedAt: new Date("2023-10-13T16:10:00Z"),
+    createdBy: "user4",
+    authorName: "Sam Wilson",
+    authorAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam",
+    messageCount: 18,
+    lastActivity: new Date("2023-10-13T16:10:00Z"),
     participantCount: 10,
     replyCount: 18,
     isPinned: false,
@@ -108,7 +108,7 @@ const ThreadList = ({ searchQuery, selectedCategories }: ThreadListProps) => {
       
       // Then sort by the selected sort option
       if (sortBy === 'latest') {
-        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
       } else {
         return b.replyCount - a.replyCount;
       }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Pin, Lock, MessageSquare } from "lucide-react";
@@ -31,7 +30,6 @@ const ThreadDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   
-  // Fetch user session
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -43,14 +41,12 @@ const ThreadDetail = () => {
     getSession();
   }, []);
 
-  // Load thread data
   useEffect(() => {
     const fetchThread = async () => {
       setIsLoading(true);
       try {
         if (!threadId) return;
         
-        // Get thread details
         const { data: threadData, error: threadError } = await supabase
           .from('discussion_threads')
           .select(`
@@ -61,7 +57,7 @@ const ThreadDetail = () => {
             created_at, 
             updated_at, 
             created_by,
-            profiles:created_by(username, avatar_url),
+            profiles(username, avatar_url),
             is_pinned,
             is_locked
           `)
@@ -76,13 +72,12 @@ const ThreadDetail = () => {
           setTitle(threadData.title);
           setCategory(threadData.category);
           setCreatedAt(new Date(threadData.created_at));
-          setAuthorName(threadData.profiles?.username || "Unknown User");
-          setAuthorAvatar(threadData.profiles?.avatar_url);
+          setAuthorName(threadData.profiles?.[0]?.username || "Unknown User");
+          setAuthorAvatar(threadData.profiles?.[0]?.avatar_url);
           setIsPinned(threadData.is_pinned);
           setIsLocked(threadData.is_locked);
         }
         
-        // Get messages
         const { data: messagesData, error: messagesError } = await supabase
           .from('discussion_messages')
           .select(`
@@ -92,7 +87,7 @@ const ThreadDetail = () => {
             created_at,
             updated_at,
             user_id,
-            profiles:user_id(username, avatar_url),
+            profiles(username, avatar_url),
             parent_id,
             likes,
             is_edited
@@ -112,8 +107,8 @@ const ThreadDetail = () => {
             createdAt: new Date(msg.created_at),
             updatedAt: new Date(msg.updated_at),
             userId: msg.user_id,
-            userName: msg.profiles?.username || "Unknown User",
-            userAvatar: msg.profiles?.avatar_url || null,
+            userName: msg.profiles?.[0]?.username || "Unknown User",
+            userAvatar: msg.profiles?.[0]?.avatar_url || null,
             parentId: msg.parent_id || null,
             likes: msg.likes,
             isEdited: msg.is_edited
@@ -184,8 +179,8 @@ const ThreadDetail = () => {
           createdAt: new Date(data.created_at),
           updatedAt: new Date(data.updated_at),
           userId: data.user_id,
-          userName: data.profiles?.username || "Unknown User",
-          userAvatar: data.profiles?.avatar_url || null,
+          userName: data.profiles?.[0]?.username || "Unknown User",
+          userAvatar: data.profiles?.[0]?.avatar_url || null,
           parentId: data.parent_id,
           likes: data.likes,
           isEdited: data.is_edited
@@ -219,7 +214,6 @@ const ThreadDetail = () => {
       setMessages(prev => prev.filter(msg => msg.id !== messageId));
       setRootMessages(prev => prev.filter(msg => msg.id !== messageId));
       
-      // Child messages will also be deleted due to cascade delete in the database
       const childMessages = messages.filter(msg => msg.parentId === messageId);
       if (childMessages.length > 0) {
         setMessages(prev => 
@@ -233,18 +227,15 @@ const ThreadDetail = () => {
   
   const handleLikeMessage = async (messageId: string) => {
     try {
-      // Find the message to update
       const messageToUpdate = messages.find(msg => msg.id === messageId);
       if (!messageToUpdate) return;
       
-      // Optimistically update the UI
       const updatedMessages = messages.map(msg => 
         msg.id === messageId ? { ...msg, likes: msg.likes + 1 } : msg
       );
       setMessages(updatedMessages);
       setRootMessages(updatedMessages.filter(msg => !msg.parentId));
       
-      // Update in the database
       const { error } = await supabase
         .from('discussion_messages')
         .update({ likes: messageToUpdate.likes + 1 })
@@ -261,7 +252,6 @@ const ThreadDetail = () => {
         variant: "destructive",
       });
       
-      // Revert optimistic update on error
       const originalMessages = [...messages];
       setMessages(originalMessages);
       setRootMessages(originalMessages.filter(msg => !msg.parentId));

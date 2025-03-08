@@ -32,7 +32,7 @@ const ThreadCard = ({ thread, onClick }: ThreadCardProps) => {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Badge variant="outline">{thread.category}</Badge>
           <span>•</span>
-          <span>Started by {thread.createdBy.name}</span>
+          <span>Started by {thread.authorName}</span>
           <span>•</span>
           <span>{formatDistanceToNow(new Date(thread.updatedAt), { addSuffix: true })}</span>
         </div>
