@@ -53,10 +53,11 @@ const CourseCard = ({
 
   return (
     <Card 
-      className="card-hover cursor-pointer overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-lg" 
+      className="overflow-hidden transition-all duration-300 hover:shadow-xl hover:translate-y-[-8px] bg-white/80 backdrop-blur-sm border border-white/40" 
       onClick={onClick}
     >
-      <CardHeader className="space-y-1">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-accent"></div>
+      <CardHeader className="space-y-1 relative">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {getLevelIcon(level)}
@@ -71,7 +72,7 @@ const CourseCard = ({
             {duration}
           </div>
         </div>
-        <h3 className="text-xl font-semibold tracking-tight">{title}</h3>
+        <h3 className="text-xl font-semibold tracking-tight line-clamp-2">{title}</h3>
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
@@ -92,7 +93,7 @@ const CourseCard = ({
             <span>Progress</span>
             <span>{progress}%</span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress value={progress} className="h-2 bg-muted/30" />
         </div>
       </CardFooter>
     </Card>

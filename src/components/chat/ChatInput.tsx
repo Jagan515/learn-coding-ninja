@@ -2,7 +2,7 @@
 import { useState, useRef, FormEvent, KeyboardEvent } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Sparkles } from "lucide-react";
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -29,18 +29,23 @@ const ChatInput = ({ onSubmit, isLoading, disabled }: ChatInputProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border-t bg-background">
-      <div className="flex gap-2">
+    <form onSubmit={handleSubmit} className="p-4 border-t bg-white/70 backdrop-blur-sm rounded-b-lg">
+      <div className="relative">
         <Textarea
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Ask a question about the course..."
-          className="min-h-[60px] resize-none"
+          className="min-h-[60px] resize-none pr-12 bg-white/60 border-primary/10 focus-visible:ring-primary/20 rounded-xl"
           disabled={isLoading || disabled}
         />
-        <Button type="submit" size="icon" disabled={isLoading || disabled}>
+        <Button 
+          type="submit" 
+          size="icon" 
+          disabled={isLoading || disabled}
+          className="absolute right-2 bottom-2 rounded-lg bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white shadow-sm"
+        >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
@@ -48,9 +53,15 @@ const ChatInput = ({ onSubmit, isLoading, disabled }: ChatInputProps) => {
           )}
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground mt-2">
-        Press Enter to send, Shift+Enter for a new line
-      </p>
+      <div className="flex items-center justify-between mt-2">
+        <p className="text-xs text-muted-foreground">
+          Press Enter to send, Shift+Enter for a new line
+        </p>
+        <div className="flex items-center text-xs text-muted-foreground">
+          <Sparkles className="h-3 w-3 mr-1 text-primary" />
+          <span>Powered by Gemini AI</span>
+        </div>
+      </div>
     </form>
   );
 };
