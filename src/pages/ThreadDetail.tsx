@@ -48,6 +48,7 @@ const ThreadDetail = () => {
       try {
         if (!threadId) return;
         
+        // First, fetch the thread details
         const { data: threadData, error: threadError } = await supabase
           .from('discussion_threads')
           .select(`
@@ -57,10 +58,7 @@ const ThreadDetail = () => {
             course_id, 
             created_at, 
             updated_at, 
-            created_by,
-            profiles(username, avatar_url),
-            is_pinned,
-            is_locked
+            created_by
           `)
           .eq('id', threadId)
           .single();
@@ -73,13 +71,26 @@ const ThreadDetail = () => {
           setTitle(threadData.title);
           setCategory(threadData.category);
           setCreatedAt(new Date(threadData.created_at));
-          // Fix the profile data access - profiles is an array
-          setAuthorName(threadData.profiles ? threadData.profiles.username || "Unknown User" : "Unknown User");
-          setAuthorAvatar(threadData.profiles ? threadData.profiles.avatar_url : null);
           setIsPinned(threadData.is_pinned);
           setIsLocked(threadData.is_locked);
+          
+          // Separately fetch the author profile data
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', threadData.created_by)
+            .single();
+            
+          if (!profileError && profileData) {
+            setAuthorName(profileData.username || "Unknown User");
+            setAuthorAvatar(profileData.avatar_url);
+          } else {
+            setAuthorName("Unknown User");
+            setAuthorAvatar(null);
+          }
         }
         
+        // Then fetch the messages
         const { data: messagesData, error: messagesError } = await supabase
           .from('discussion_messages')
           .select(`
@@ -89,7 +100,6 @@ const ThreadDetail = () => {
             created_at,
             updated_at,
             user_id,
-            profiles(username, avatar_url),
             parent_id,
             likes,
             is_edited
@@ -102,20 +112,31 @@ const ThreadDetail = () => {
         }
         
         if (messagesData) {
-          const formattedMessages: Message[] = messagesData.map(msg => ({
-            id: msg.id,
-            threadId: msg.thread_id,
-            content: msg.content,
-            createdAt: new Date(msg.created_at),
-            updatedAt: new Date(msg.updated_at),
-            userId: msg.user_id,
-            // Fix the profile data access - profiles is an object
-            userName: msg.profiles ? msg.profiles.username || "Unknown User" : "Unknown User",
-            userAvatar: msg.profiles ? msg.profiles.avatar_url : null,
-            parentId: msg.parent_id || null,
-            likes: msg.likes,
-            isEdited: msg.is_edited
-          }));
+          // Process the messages and fetch user profiles separately
+          const messagePromises = messagesData.map(async (msg) => {
+            // Fetch profile data for each message
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('username, avatar_url')
+              .eq('id', msg.user_id)
+              .single();
+            
+            return {
+              id: msg.id,
+              threadId: msg.thread_id,
+              content: msg.content,
+              createdAt: new Date(msg.created_at),
+              updatedAt: new Date(msg.updated_at),
+              userId: msg.user_id,
+              userName: profileData?.username || "Unknown User",
+              userAvatar: profileData?.avatar_url || null,
+              parentId: msg.parent_id || null,
+              likes: msg.likes,
+              isEdited: msg.is_edited
+            };
+          });
+          
+          const formattedMessages: Message[] = await Promise.all(messagePromises);
           
           setMessages(formattedMessages);
           setRootMessages(formattedMessages.filter(msg => !msg.parentId));
@@ -163,7 +184,6 @@ const ThreadDetail = () => {
           created_at,
           updated_at,
           user_id,
-          profiles(username, avatar_url),
           parent_id,
           likes,
           is_edited
@@ -175,6 +195,13 @@ const ThreadDetail = () => {
       }
       
       if (data) {
+        // Fetch the profile data for the current user
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('username, avatar_url')
+          .eq('id', userId)
+          .single();
+        
         const formattedMessage: Message = {
           id: data.id,
           threadId: data.thread_id,
@@ -182,9 +209,8 @@ const ThreadDetail = () => {
           createdAt: new Date(data.created_at),
           updatedAt: new Date(data.updated_at),
           userId: data.user_id,
-          // Fix the profile data access - profiles is an object
-          userName: data.profiles ? data.profiles.username || "Unknown User" : "Unknown User",
-          userAvatar: data.profiles ? data.profiles.avatar_url : null,
+          userName: profileData?.username || "Unknown User",
+          userAvatar: profileData?.avatar_url || null,
           parentId: data.parent_id,
           likes: data.likes,
           isEdited: data.is_edited
