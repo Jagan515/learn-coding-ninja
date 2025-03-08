@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Pin, Lock, MessageSquare } from "lucide-react";
@@ -72,8 +73,9 @@ const ThreadDetail = () => {
           setTitle(threadData.title);
           setCategory(threadData.category);
           setCreatedAt(new Date(threadData.created_at));
-          setAuthorName(threadData.profiles?.[0]?.username || "Unknown User");
-          setAuthorAvatar(threadData.profiles?.[0]?.avatar_url);
+          // Fix the profile data access - profiles is an array
+          setAuthorName(threadData.profiles ? threadData.profiles.username || "Unknown User" : "Unknown User");
+          setAuthorAvatar(threadData.profiles ? threadData.profiles.avatar_url : null);
           setIsPinned(threadData.is_pinned);
           setIsLocked(threadData.is_locked);
         }
@@ -107,8 +109,9 @@ const ThreadDetail = () => {
             createdAt: new Date(msg.created_at),
             updatedAt: new Date(msg.updated_at),
             userId: msg.user_id,
-            userName: msg.profiles?.[0]?.username || "Unknown User",
-            userAvatar: msg.profiles?.[0]?.avatar_url || null,
+            // Fix the profile data access - profiles is an object
+            userName: msg.profiles ? msg.profiles.username || "Unknown User" : "Unknown User",
+            userAvatar: msg.profiles ? msg.profiles.avatar_url : null,
             parentId: msg.parent_id || null,
             likes: msg.likes,
             isEdited: msg.is_edited
@@ -160,7 +163,7 @@ const ThreadDetail = () => {
           created_at,
           updated_at,
           user_id,
-          profiles:user_id(username, avatar_url),
+          profiles(username, avatar_url),
           parent_id,
           likes,
           is_edited
@@ -179,8 +182,9 @@ const ThreadDetail = () => {
           createdAt: new Date(data.created_at),
           updatedAt: new Date(data.updated_at),
           userId: data.user_id,
-          userName: data.profiles?.[0]?.username || "Unknown User",
-          userAvatar: data.profiles?.[0]?.avatar_url || null,
+          // Fix the profile data access - profiles is an object
+          userName: data.profiles ? data.profiles.username || "Unknown User" : "Unknown User",
+          userAvatar: data.profiles ? data.profiles.avatar_url : null,
           parentId: data.parent_id,
           likes: data.likes,
           isEdited: data.is_edited
