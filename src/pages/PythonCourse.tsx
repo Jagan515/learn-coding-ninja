@@ -6,7 +6,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatInterface from "@/components/ChatInterface";
 import PythonCourseIntro from "@/components/course/python/PythonCourseIntro";
 import LearningPath from "@/components/course/python/LearningPath";
-import PythonPractice from "@/components/course/python/PythonPractice";
 import PythonMCQ from "@/components/course/python/PythonMCQ";
 import CodingChallenge from "@/components/course/python/CodingChallenge";
 import { Button } from "@/components/ui/button";

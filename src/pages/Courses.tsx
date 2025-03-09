@@ -17,6 +17,19 @@ import {
 } from "@/components/ui/select";
 import { Search, BookOpen, Filter, Star } from "lucide-react";
 
+// Define a custom type for the Python course that matches the API course shape
+interface PythonCourse {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  estimated_hours: number;
+  course_sections: any[];
+  programming_language: string;
+  featured: boolean;
+  category_id?: string;
+}
+
 const Courses = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -26,11 +39,11 @@ const Courses = () => {
   const { data: categories = [], isLoading: isLoadingCategories } = useCourseCategories();
 
   // Python course special card (featured course)
-  const pythonCourse = {
+  const pythonCourse: PythonCourse = {
     id: "python-course",
     title: "Python Programming",
     description: "Learn Python from scratch with AI-powered assistance and hands-on practice",
-    difficulty: "beginner" as const,
+    difficulty: "beginner",
     estimated_hours: 40,
     course_sections: Array(6).fill({}),
     programming_language: "Python",
@@ -50,8 +63,12 @@ const Courses = () => {
   const filteredCourses = allCourses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(search.toLowerCase()) ||
                          course.description.toLowerCase().includes(search.toLowerCase());
+    
+    // Handle both course types (API course with category field and PythonCourse)
     const matchesCategory = selectedCategory === "all" || 
-                           (course.category?.id === selectedCategory);
+                           ('category' in course && course.category?.id === selectedCategory) ||
+                           (course.category_id === selectedCategory);
+    
     return matchesSearch && matchesCategory;
   });
 
@@ -155,23 +172,31 @@ const Courses = () => {
             <h3 className="text-xl font-semibold">All Courses</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {filteredCourses.length > 1 ? (
-                filteredCourses.filter(course => course.id !== "python-course").map((course) => (
-                  <CourseCard
-                    key={course.id}
-                    id={course.id}
-                    title={course.title}
-                    description={course.description}
-                    level={course.difficulty}
-                    duration={`${course.estimated_hours}h`}
-                    progress={0}
-                    lessons={course.course_sections?.reduce(
-                      (acc, section) => acc + (section.lessons?.length || 0),
-                      0
-                    ) || 0}
-                    language={course.programming_language}
-                    onClick={() => handleCourseClick(course.id)}
-                  />
-                ))
+                filteredCourses.filter(course => course.id !== "python-course").map((course) => {
+                  // Calculate the number of lessons safely
+                  const lessonCount = course.course_sections?.reduce(
+                    (acc, section) => {
+                      // Safely access lessons length if it exists, otherwise add 0
+                      return acc + (section.lessons?.length || 0);
+                    },
+                    0
+                  ) || 0;
+                  
+                  return (
+                    <CourseCard
+                      key={course.id}
+                      id={course.id}
+                      title={course.title}
+                      description={course.description}
+                      level={course.difficulty}
+                      duration={`${course.estimated_hours}h`}
+                      progress={0}
+                      lessons={lessonCount}
+                      language={course.programming_language}
+                      onClick={() => handleCourseClick(course.id)}
+                    />
+                  );
+                })
               ) : (
                 search || selectedCategory !== "all" ? (
                   <div className="col-span-2 text-center py-12 space-y-4 bg-card rounded-lg shadow-sm">
