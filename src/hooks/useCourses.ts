@@ -36,7 +36,7 @@ export const useCourses = () => {
   });
 };
 
-// Add featured courses for the tech stacks that aren't in the database yet
+// Add featured courses for various tech stacks
 export const getFeaturedCourses = () => {
   const featuredCourses = [
     {
@@ -45,7 +45,7 @@ export const getFeaturedCourses = () => {
       description: "Learn Python from scratch with AI-powered assistance and hands-on practice",
       difficulty: "beginner" as const,
       estimated_hours: 40,
-      course_sections: Array(6).fill({}),
+      course_sections: Array(6).fill({ lessons: Array(4).fill({ id: "lesson-id" }) }),
       programming_language: "Python",
       featured: true
     },
@@ -55,7 +55,7 @@ export const getFeaturedCourses = () => {
       description: "Master C++ fundamentals, STL, and advanced concepts with practical exercises",
       difficulty: "intermediate" as const,
       estimated_hours: 50,
-      course_sections: Array(7).fill({}),
+      course_sections: Array(7).fill({ lessons: Array(4).fill({ id: "lesson-id" }) }),
       programming_language: "C++",
       featured: true
     },
@@ -65,7 +65,7 @@ export const getFeaturedCourses = () => {
       description: "Build a strong foundation in C programming with memory management and data structures",
       difficulty: "beginner" as const,
       estimated_hours: 35,
-      course_sections: Array(5).fill({}),
+      course_sections: Array(5).fill({ lessons: Array(4).fill({ id: "lesson-id" }) }),
       programming_language: "C",
       featured: true
     },
@@ -75,7 +75,7 @@ export const getFeaturedCourses = () => {
       description: "Comprehensive Java course covering OOP, collections, threading, and enterprise applications",
       difficulty: "intermediate" as const,
       estimated_hours: 60,
-      course_sections: Array(8).fill({}),
+      course_sections: Array(8).fill({ lessons: Array(4).fill({ id: "lesson-id" }) }),
       programming_language: "Java",
       featured: true
     },
@@ -85,7 +85,7 @@ export const getFeaturedCourses = () => {
       description: "Essential DSA concepts with implementation in multiple languages and problem-solving techniques",
       difficulty: "advanced" as const,
       estimated_hours: 70,
-      course_sections: Array(10).fill({}),
+      course_sections: Array(10).fill({ lessons: Array(4).fill({ id: "lesson-id" }) }),
       programming_language: "Multiple",
       featured: true
     }

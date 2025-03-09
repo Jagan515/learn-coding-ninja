@@ -24,7 +24,7 @@ interface FeaturedCourse {
   description: string;
   difficulty: "beginner" | "intermediate" | "advanced";
   estimated_hours: number;
-  course_sections: any[];
+  course_sections: { lessons?: { id: string }[] }[];
   programming_language: string;
   featured: boolean;
   category_id?: string;
