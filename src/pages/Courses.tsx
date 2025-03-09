@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, BookOpen, Filter } from "lucide-react";
+import { Search, BookOpen, Filter, Star } from "lucide-react";
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -25,14 +25,33 @@ const Courses = () => {
   const { data: courses = [], isLoading: isLoadingCourses } = useCourses();
   const { data: categories = [], isLoading: isLoadingCategories } = useCourseCategories();
 
-  const handleCourseClick = (courseId: string) => {
-    navigate(`/courses/${courseId}`);
+  // Python course special card (featured course)
+  const pythonCourse = {
+    id: "python-course",
+    title: "Python Programming",
+    description: "Learn Python from scratch with AI-powered assistance and hands-on practice",
+    difficulty: "beginner" as const,
+    estimated_hours: 40,
+    course_sections: Array(6).fill({}),
+    programming_language: "Python",
+    featured: true
   };
 
-  const filteredCourses = courses.filter(course => {
+  const handleCourseClick = (courseId: string) => {
+    if (courseId === "python-course") {
+      navigate("/courses/python");
+    } else {
+      navigate(`/courses/${courseId}`);
+    }
+  };
+
+  const allCourses = [pythonCourse, ...courses];
+
+  const filteredCourses = allCourses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(search.toLowerCase()) ||
                          course.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || course.category?.id === selectedCategory;
+    const matchesCategory = selectedCategory === "all" || 
+                           (course.category?.id === selectedCategory);
     return matchesSearch && matchesCategory;
   });
 
@@ -112,10 +131,31 @@ const Courses = () => {
               </div>
             </div>
 
+            {/* Featured Course - Python */}
+            <div className="relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-primary text-white px-4 py-1 rounded-bl-lg z-10 flex items-center gap-1">
+                <Star className="h-4 w-4 fill-white" />
+                <span className="font-medium">Featured</span>
+              </div>
+              <CourseCard
+                key={pythonCourse.id}
+                id={pythonCourse.id}
+                title={pythonCourse.title}
+                description={pythonCourse.description}
+                level={pythonCourse.difficulty}
+                duration={`${pythonCourse.estimated_hours}h`}
+                progress={25}
+                lessons={24}
+                language={pythonCourse.programming_language}
+                onClick={() => handleCourseClick(pythonCourse.id)}
+              />
+            </div>
+
             {/* Course Grid */}
+            <h3 className="text-xl font-semibold">All Courses</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {filteredCourses.length > 0 ? (
-                filteredCourses.map((course) => (
+              {filteredCourses.length > 1 ? (
+                filteredCourses.filter(course => course.id !== "python-course").map((course) => (
                   <CourseCard
                     key={course.id}
                     id={course.id}
@@ -133,13 +173,15 @@ const Courses = () => {
                   />
                 ))
               ) : (
-                <div className="col-span-2 text-center py-12 space-y-4 bg-card rounded-lg shadow-sm">
-                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto" />
-                  <h3 className="text-xl font-semibold">No courses found</h3>
-                  <p className="text-muted-foreground">
-                    Try adjusting your search or filter criteria
-                  </p>
-                </div>
+                search || selectedCategory !== "all" ? (
+                  <div className="col-span-2 text-center py-12 space-y-4 bg-card rounded-lg shadow-sm">
+                    <BookOpen className="h-12 w-12 text-muted-foreground mx-auto" />
+                    <h3 className="text-xl font-semibold">No courses found</h3>
+                    <p className="text-muted-foreground">
+                      Try adjusting your search or filter criteria
+                    </p>
+                  </div>
+                ) : null
               )}
             </div>
           </div>

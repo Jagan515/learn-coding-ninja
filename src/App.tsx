@@ -17,6 +17,7 @@ import Practice from "./pages/Practice";
 import Discussion from "./pages/Discussion";
 import ThreadDetail from "./pages/ThreadDetail";
 import NewThread from "./pages/NewThread";
+import PythonCourse from "./pages/PythonCourse";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/courses" element={<Courses />} />
               <Route path="/courses/:courseId" element={<CourseDetails />} />
+              <Route path="/courses/python" element={<PythonCourse />} />
               <Route
                 path="/dashboard"
                 element={
