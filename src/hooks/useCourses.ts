@@ -35,3 +35,61 @@ export const useCourses = () => {
     },
   });
 };
+
+// Add featured courses for the tech stacks that aren't in the database yet
+export const getFeaturedCourses = () => {
+  const featuredCourses = [
+    {
+      id: "python-course",
+      title: "Python Programming",
+      description: "Learn Python from scratch with AI-powered assistance and hands-on practice",
+      difficulty: "beginner" as const,
+      estimated_hours: 40,
+      course_sections: Array(6).fill({}),
+      programming_language: "Python",
+      featured: true
+    },
+    {
+      id: "cpp-course",
+      title: "C++ Programming",
+      description: "Master C++ fundamentals, STL, and advanced concepts with practical exercises",
+      difficulty: "intermediate" as const,
+      estimated_hours: 50,
+      course_sections: Array(7).fill({}),
+      programming_language: "C++",
+      featured: true
+    },
+    {
+      id: "c-course",
+      title: "C Programming",
+      description: "Build a strong foundation in C programming with memory management and data structures",
+      difficulty: "beginner" as const,
+      estimated_hours: 35,
+      course_sections: Array(5).fill({}),
+      programming_language: "C",
+      featured: true
+    },
+    {
+      id: "java-course",
+      title: "Java Programming",
+      description: "Comprehensive Java course covering OOP, collections, threading, and enterprise applications",
+      difficulty: "intermediate" as const,
+      estimated_hours: 60,
+      course_sections: Array(8).fill({}),
+      programming_language: "Java",
+      featured: true
+    },
+    {
+      id: "dsa-course",
+      title: "Data Structures & Algorithms",
+      description: "Essential DSA concepts with implementation in multiple languages and problem-solving techniques",
+      difficulty: "advanced" as const,
+      estimated_hours: 70,
+      course_sections: Array(10).fill({}),
+      programming_language: "Multiple",
+      featured: true
+    }
+  ];
+  
+  return featuredCourses;
+};

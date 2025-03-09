@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCourses } from "@/hooks/useCourses";
+import { useCourses, getFeaturedCourses } from "@/hooks/useCourses";
 import { useCourseCategories } from "@/hooks/useCourseCategories";
 import Navbar from "@/components/Navbar";
 import { Input } from "@/components/ui/input";
@@ -16,8 +17,8 @@ import {
 } from "@/components/ui/select";
 import { Search, BookOpen, Filter, Star } from "lucide-react";
 
-// Define a custom type for the Python course that matches the API course shape
-interface PythonCourse {
+// Define a custom type for the featured courses
+interface FeaturedCourse {
   id: string;
   title: string;
   description: string;
@@ -55,33 +56,33 @@ const Courses = () => {
   const { data: courses = [], isLoading: isLoadingCourses } = useCourses();
   const { data: categories = [], isLoading: isLoadingCategories } = useCourseCategories();
 
-  // Python course special card (featured course)
-  const pythonCourse: PythonCourse = {
-    id: "python-course",
-    title: "Python Programming",
-    description: "Learn Python from scratch with AI-powered assistance and hands-on practice",
-    difficulty: "beginner",
-    estimated_hours: 40,
-    course_sections: Array(6).fill({}),
-    programming_language: "Python",
-    featured: true
-  };
+  // Get all featured courses
+  const featuredCourses: FeaturedCourse[] = getFeaturedCourses();
 
   const handleCourseClick = (courseId: string) => {
-    if (courseId === "python-course") {
-      navigate("/courses/python");
+    // Map course IDs to their respective routes
+    const courseRoutes: Record<string, string> = {
+      "python-course": "/courses/python",
+      "cpp-course": "/courses/cpp",
+      "c-course": "/courses/c",
+      "java-course": "/courses/java",
+      "dsa-course": "/courses/dsa"
+    };
+
+    if (courseRoutes[courseId]) {
+      navigate(courseRoutes[courseId]);
     } else {
       navigate(`/courses/${courseId}`);
     }
   };
 
-  const allCourses = [pythonCourse, ...courses];
+  const allCourses = [...featuredCourses, ...courses];
 
   const filteredCourses = allCourses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(search.toLowerCase()) ||
                          course.description.toLowerCase().includes(search.toLowerCase());
     
-    // Handle both course types (API course with category field and PythonCourse)
+    // Handle both course types (API course with category field and FeaturedCourse)
     const matchesCategory = selectedCategory === "all" || 
                            (course as ApiCourse).category?.id === selectedCategory ||
                            course.category_id === selectedCategory;
@@ -90,7 +91,7 @@ const Courses = () => {
   });
 
   // Function to safely calculate the lesson count for a course
-  const calculateLessonCount = (course: PythonCourse | ApiCourse): number => {
+  const calculateLessonCount = (course: FeaturedCourse | ApiCourse): number => {
     // If it doesn't have course_sections, return 0
     if (!course.course_sections) return 0;
     
@@ -181,31 +182,35 @@ const Courses = () => {
               </div>
             </div>
 
-            {/* Featured Course - Python */}
-            <div className="relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-primary text-white px-4 py-1 rounded-bl-lg z-10 flex items-center gap-1">
-                <Star className="h-4 w-4 fill-white" />
-                <span className="font-medium">Featured</span>
-              </div>
-              <CourseCard
-                key={pythonCourse.id}
-                id={pythonCourse.id}
-                title={pythonCourse.title}
-                description={pythonCourse.description}
-                level={pythonCourse.difficulty}
-                duration={`${pythonCourse.estimated_hours}h`}
-                progress={25}
-                lessons={24}
-                language={pythonCourse.programming_language}
-                onClick={() => handleCourseClick(pythonCourse.id)}
-              />
+            {/* Featured Courses Section */}
+            <h3 className="text-xl font-semibold">Featured Courses</h3>
+            <div className="grid grid-cols-1 gap-6">
+              {featuredCourses.map(course => (
+                <div key={course.id} className="relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-gradient-to-l from-purple-600 to-primary text-white px-4 py-1 rounded-bl-lg z-10 flex items-center gap-1">
+                    <Star className="h-4 w-4 fill-white" />
+                    <span className="font-medium">Featured</span>
+                  </div>
+                  <CourseCard
+                    id={course.id}
+                    title={course.title}
+                    description={course.description}
+                    level={course.difficulty}
+                    duration={`${course.estimated_hours}h`}
+                    progress={0}
+                    lessons={24}
+                    language={course.programming_language}
+                    onClick={() => handleCourseClick(course.id)}
+                  />
+                </div>
+              ))}
             </div>
 
-            {/* Course Grid */}
+            {/* Regular Courses */}
             <h3 className="text-xl font-semibold">All Courses</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {filteredCourses.length > 1 ? (
-                filteredCourses.filter(course => course.id !== "python-course").map((course) => {
+              {courses.length > 0 ? (
+                courses.map((course) => {
                   // Calculate lessons using the safe function
                   const lessonCount = calculateLessonCount(course);
                   
