@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCourses } from "@/hooks/useCourses";
@@ -27,6 +26,24 @@ interface PythonCourse {
   course_sections: any[];
   programming_language: string;
   featured: boolean;
+  category_id?: string;
+}
+
+// Define a type for API courses
+interface ApiCourse {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  estimated_hours: number;
+  course_sections: {
+    id: string;
+    title: string;
+    lessons?: { id: string }[];
+  }[];
+  programming_language: string;
+  featured?: boolean;
+  category?: { id: string };
   category_id?: string;
 }
 
@@ -66,11 +83,27 @@ const Courses = () => {
     
     // Handle both course types (API course with category field and PythonCourse)
     const matchesCategory = selectedCategory === "all" || 
-                           ('category' in course && course.category?.id === selectedCategory) ||
-                           (course.category_id === selectedCategory);
+                           (course as ApiCourse).category?.id === selectedCategory ||
+                           course.category_id === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
+
+  // Function to safely calculate the lesson count for a course
+  const calculateLessonCount = (course: PythonCourse | ApiCourse): number => {
+    // If it doesn't have course_sections, return 0
+    if (!course.course_sections) return 0;
+    
+    // Calculate the sum
+    return course.course_sections.reduce((total, section) => {
+      // If the section has lessons property and it's an array, add its length
+      if (section.lessons && Array.isArray(section.lessons)) {
+        return total + section.lessons.length;
+      }
+      // Otherwise, don't add anything
+      return total;
+    }, 0);
+  };
 
   if (isLoadingCourses || isLoadingCategories) {
     return (
@@ -173,14 +206,8 @@ const Courses = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {filteredCourses.length > 1 ? (
                 filteredCourses.filter(course => course.id !== "python-course").map((course) => {
-                  // Calculate the number of lessons safely
-                  const lessonCount = course.course_sections?.reduce(
-                    (acc, section) => {
-                      // Safely access lessons length if it exists, otherwise add 0
-                      return acc + (section.lessons?.length || 0);
-                    },
-                    0
-                  ) || 0;
+                  // Calculate lessons using the safe function
+                  const lessonCount = calculateLessonCount(course);
                   
                   return (
                     <CourseCard
