@@ -19,6 +19,7 @@ export interface ApiCourse {
   course_sections?: CourseSection[];
   updated_at?: string;
   featured?: boolean;
+  programming_language?: string;
 }
 
 export interface FeaturedCourse extends ApiCourse {
@@ -66,7 +67,8 @@ export interface TestCase {
   id: string;
   input: string;
   output: string;
-  explanation?: string;
+  explanation: string;
+  passed?: boolean;
 }
 
 export interface Challenge {

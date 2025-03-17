@@ -263,11 +263,11 @@ const executeCode = (code: string, language: ProgrammingLanguage): { output: str
               
               for (let i = start; i < end; i++) {
                 if (printArg === loopVar) {
-                  output += formatStr.replace(/%d|%i/, i).replace(/\\n/g, '\n');
+                  output += formatStr.replace(/%d|%i/, String(i)).replace(/\\n/g, '\n');
                 } else if (printArg && printArg.includes(loopVar)) {
                   try {
                     const value = eval(printArg.replace(loopVar, i.toString()));
-                    output += formatStr.replace(/%d|%i/, value).replace(/\\n/g, '\n');
+                    output += formatStr.replace(/%d|%i/, String(value)).replace(/\\n/g, '\n');
                   } catch {
                     output += formatStr.replace(/%d|%i/, printArg.replace(loopVar, i.toString())).replace(/\\n/g, '\n');
                   }
@@ -288,10 +288,11 @@ const executeCode = (code: string, language: ProgrammingLanguage): { output: str
                 const args = formatMatch[2]?.split(',').map(arg => arg.trim()) || [];
                 
                 let result = formatStr;
-                args.forEach((arg, index) => {
+                args.forEach((arg) => {
                   try {
                     const value = eval(arg);
-                    result = result.replace(/%d|%i|%f|%s/, value);
+                    // Use String() instead of replace with a function
+                    result = result.replace(/%d|%i|%f|%s/, String(value));
                   } catch {
                     result = result.replace(/%d|%i|%f|%s/, arg);
                   }

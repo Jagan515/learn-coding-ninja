@@ -2,7 +2,8 @@
 import { useMemo } from "react";
 import { useCourses } from "./useCourses";
 import { useCourseCategories } from "./useCourseCategories";
-import { ApiCourse, FeaturedCourse, calculateLessonCount } from "@/types/course.types";
+import type { ApiCourse, FeaturedCourse } from "@/types/course.types";
+import { calculateLessonCount } from "@/types/course.types";
 
 export type CourseFilters = {
   query: string;
@@ -71,6 +72,3 @@ export const useFilteredCourses = ({ filters }: UseFilteredCoursesProps) => {
     featuredCourses,
   };
 };
-
-// Re-export the types and helper functions
-export { ApiCourse, FeaturedCourse, calculateLessonCount } from "@/types/course.types";
