@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { java } from "@codemirror/lang-java";
@@ -16,6 +17,7 @@ import ControlPanel from "./ControlPanel";
 import OutputTerminal from "./OutputTerminal";
 import DebugPanel from "./DebugPanel";
 import MemoryPanel from "./MemoryPanel";
+import { useToast } from "@/hooks/use-toast";
 
 const getLanguageExtension = (language: ProgrammingLanguage) => {
   switch (language) {
@@ -26,6 +28,57 @@ const getLanguageExtension = (language: ProgrammingLanguage) => {
     case "c":
     case "cpp":
       return cpp();
+  }
+};
+
+// Default code templates for each language
+const getDefaultCode = (language: ProgrammingLanguage): string => {
+  switch (language) {
+    case "python":
+      return `# Python Example
+print("Hello, World!")
+
+# Try a simple calculation
+result = 5 + 7
+print(f"5 + 7 = {result}")`;
+    case "java":
+      return `// Java Example
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+        
+        // Try a simple calculation
+        int result = 5 + 7;
+        System.out.println("5 + 7 = " + result);
+    }
+}`;
+    case "c":
+      return `// C Example
+#include <stdio.h>
+
+int main() {
+    printf("Hello, World!\\n");
+    
+    // Try a simple calculation
+    int result = 5 + 7;
+    printf("5 + 7 = %d\\n", result);
+    
+    return 0;
+}`;
+    case "cpp":
+      return `// C++ Example
+#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello, World!" << endl;
+    
+    // Try a simple calculation
+    int result = 5 + 7;
+    cout << "5 + 7 = " << result << endl;
+    
+    return 0;
+}`;
   }
 };
 
@@ -48,6 +101,8 @@ const CodeTerminal = () => {
   const [language, setLanguage] = useState<ProgrammingLanguage>("python");
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
+  const { toast } = useToast();
+  
   const [debugState, setDebugState] = useState<DebugState>({
     isDebugging: false,
     breakpoints: [],
@@ -61,13 +116,28 @@ const CodeTerminal = () => {
     },
   });
 
+  // Set default code when language changes
+  useEffect(() => {
+    setCode(getDefaultCode(language));
+  }, [language]);
+
   const handleRun = () => {
+    if (!code.trim()) {
+      toast({
+        title: "Empty Code",
+        description: "Please write some code before running.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsRunning(true);
     setDebugState(prev => ({ ...prev, isDebugging: false, currentLine: 0 }));
     
     const compileMessage = `[${language.toUpperCase()}] Compiling code...\n`;
     const runtimeMessage = `[${language.toUpperCase()}] Executing program...\n`;
     
+    // Simulated compilation and execution
     const executeCode = () => {
       try {
         let result = "";
@@ -109,25 +179,45 @@ const CodeTerminal = () => {
           case "cpp":
             if (code.includes("printf") || code.includes("cout")) {
               const printfMatches = code.match(/printf\((.*?)\)/g);
-              const coutMatches = code.match(/cout\s*<<\s*(.*?);/g);
+              const coutMatches = code.match(/cout\s*<<\s*(.*?)(;|<<)/g);
               
               if (printfMatches) {
                 result = printfMatches
                   .map(match => {
                     const content = match.substring(7, match.length - 1);
-                    return content.startsWith('"') ? content.slice(1, -1) : eval(content);
+                    const parts = content.split(',');
+                    if (parts.length === 1) {
+                      return content.startsWith('"') ? content.slice(1, -1) : eval(content);
+                    } else {
+                      // Simple format string handling
+                      let formatStr = parts[0].slice(1, -1);
+                      formatStr = formatStr.replace(/\\n/g, '\n');
+                      return formatStr.replace(/%d|%s|%f/g, "value");
+                    }
                   })
                   .join("\n");
               } else if (coutMatches) {
                 result = coutMatches
                   .map(match => {
-                    const content = match.split('<<')[1].trim().slice(0, -1);
-                    return content.startsWith('"') ? content.slice(1, -1) : eval(content);
+                    // Remove 'cout <<' and potential trailing '<<' or ';'
+                    let content = match.replace(/cout\s*<<\s*/, '').replace(/;$|<<$/, '').trim();
+                    if (content.startsWith('"') && content.endsWith('"')) {
+                      return content.slice(1, -1);
+                    } else if (content === "endl") {
+                      return "\n";
+                    } else {
+                      return content;
+                    }
                   })
-                  .join("\n");
+                  .join("");
               }
             }
             break;
+        }
+        
+        // Simulate potential errors
+        if (Math.random() < 0.05) {
+          throw new Error("Random runtime error simulated for testing");
         }
         
         return result;
@@ -136,20 +226,56 @@ const CodeTerminal = () => {
       }
     };
 
-    const result = executeCode();
-    const outputMessage = `${compileMessage}${runtimeMessage}\nOutput:\n${result}`;
-    setOutput(outputMessage);
-    
-    setTimeout(() => setIsRunning(false), 1000);
+    // Simulate network delay for compilation
+    setTimeout(() => {
+      try {
+        const startTime = performance.now();
+        const result = executeCode();
+        const endTime = performance.now();
+        const executionTime = (endTime - startTime).toFixed(2);
+        
+        // Update output with execution results
+        const successMessage = `Execution completed in ${executionTime}ms with exit code 0.\n`;
+        const outputMessage = `${compileMessage}${runtimeMessage}${successMessage}\nOutput:\n${result}`;
+        setOutput(outputMessage);
+        
+        // Show success toast
+        toast({
+          title: "Execution Complete",
+          description: `Code executed successfully in ${executionTime}ms.`,
+        });
+      } catch (error) {
+        // Handle any unexpected errors
+        const errorMessage = `${compileMessage}Error during execution: ${error.message}`;
+        setOutput(errorMessage);
+        
+        toast({
+          title: "Execution Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } finally {
+        setIsRunning(false);
+      }
+    }, 500 + Math.random() * 1000); // Random delay between 500ms and 1500ms
   };
 
   const handleDebug = () => {
+    if (!code.trim()) {
+      toast({
+        title: "Empty Code",
+        description: "Please write some code before debugging.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const startTime = performance.now();
     
     setDebugState(prev => ({
       ...prev,
       isDebugging: true,
-      currentLine: 0,
+      currentLine: 1,
       variables: { 
         "counter": 0,
         "message": "Hello, debugger!",
@@ -158,19 +284,29 @@ const CodeTerminal = () => {
       memoryStats: {
         heapUsed: 50 * 1024 * 1024, // 50MB
         heapTotal: 100 * 1024 * 1024, // 100MB
-        timeElapsed: performance.now() - startTime,
+        timeElapsed: 0,
         cpuUsage: 25, // 25% CPU usage
       }
     }));
-    setOutput("[Debugger] Starting debug session...\n");
+    
+    setOutput("[Debugger] Starting debug session...\n[Debugger] Loaded variables for inspection\n[Debugger] Ready to step through code");
+    
+    toast({
+      title: "Debug Mode Activated",
+      description: "Use the step controls to navigate through your code.",
+    });
   };
 
   const handleStepOver = () => {
     const startTime = performance.now();
+    const lineCount = code.split('\n').length;
+    
+    // Simulate stepping to the next line, wrapping around if we reach the end
+    const nextLine = (debugState.currentLine + 1) % lineCount || 1;
     
     setDebugState(prev => ({
       ...prev,
-      currentLine: prev.currentLine + 1,
+      currentLine: nextLine,
       variables: {
         ...prev.variables,
         counter: prev.variables.counter + 1
@@ -182,16 +318,28 @@ const CodeTerminal = () => {
         cpuUsage: Math.min(prev.memoryStats.cpuUsage + 5, 100), // Increase CPU usage
       }
     }));
-    setOutput(prev => prev + `\n[Debugger] Stepped to line ${debugState.currentLine + 1}`);
+    
+    setOutput(prev => prev + `\n[Debugger] Stepped to line ${nextLine}`);
   };
 
   const handleStopDebug = () => {
     setDebugState(prev => ({ ...prev, isDebugging: false }));
+    setOutput(prev => prev + "\n[Debugger] Debug session terminated");
+    
+    toast({
+      title: "Debug Mode Deactivated",
+      description: "Returning to regular editing mode.",
+    });
   };
 
   const handleClear = () => {
     setOutput("");
     setDebugState(prev => ({ ...prev, isDebugging: false, currentLine: 0 }));
+    
+    toast({
+      title: "Console Cleared",
+      description: "Output terminal has been cleared.",
+    });
   };
 
   const toggleTheme = () => {
@@ -200,7 +348,7 @@ const CodeTerminal = () => {
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto border-2">
+    <Card className="w-full mx-auto border-2">
       <CardHeader className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
