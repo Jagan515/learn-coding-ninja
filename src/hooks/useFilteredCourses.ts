@@ -2,6 +2,7 @@
 import { useMemo } from "react";
 import { useCourses } from "./useCourses";
 import { useCourseCategories } from "./useCourseCategories";
+import { ApiCourse, FeaturedCourse, calculateLessonCount } from "@/types/course.types";
 
 export type CourseFilters = {
   query: string;
@@ -40,20 +41,6 @@ export const useFilteredCourses = ({ filters }: UseFilteredCoursesProps) => {
 
   const isLoading = isLoadingCourses || isLoadingCategories;
 
-  // Modified this function to properly calculate lesson count
-  const calculateLessonCount = (course: any): number => {
-    if (!course.course_sections) return 0;
-    
-    let count = 0;
-    course.course_sections.forEach((section: any) => {
-      if (section.lessons && Array.isArray(section.lessons)) {
-        count += section.lessons.length;
-      }
-    });
-    
-    return count;
-  };
-
   // Calculate total lessons across all courses
   const totalLessons = useMemo(() => {
     if (!courses) return 0;
@@ -84,3 +71,6 @@ export const useFilteredCourses = ({ filters }: UseFilteredCoursesProps) => {
     featuredCourses,
   };
 };
+
+// Re-export the types and helper functions
+export { ApiCourse, FeaturedCourse, calculateLessonCount } from "@/types/course.types";

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -31,25 +30,22 @@ const getLanguageExtension = (language: ProgrammingLanguage) => {
   }
 };
 
-// Default code templates for each language
+// Default code templates for each language with loop examples that print 0-4
 const getDefaultCode = (language: ProgrammingLanguage): string => {
   switch (language) {
     case "python":
       return `# Python Example
-print("Hello, World!")
-
-# Try a simple calculation
-result = 5 + 7
-print(f"5 + 7 = {result}")`;
+# Print numbers 0 to 4 using a loop
+for i in range(5):
+    print(i)`;
     case "java":
       return `// Java Example
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello, World!");
-        
-        // Try a simple calculation
-        int result = 5 + 7;
-        System.out.println("5 + 7 = " + result);
+        // Print numbers 0 to 4 using a loop
+        for (int i = 0; i < 5; i++) {
+            System.out.println(i);
+        }
     }
 }`;
     case "c":
@@ -57,11 +53,10 @@ public class Main {
 #include <stdio.h>
 
 int main() {
-    printf("Hello, World!\\n");
-    
-    // Try a simple calculation
-    int result = 5 + 7;
-    printf("5 + 7 = %d\\n", result);
+    // Print numbers 0 to 4 using a loop
+    for (int i = 0; i < 5; i++) {
+        printf("%d\\n", i);
+    }
     
     return 0;
 }`;
@@ -71,11 +66,10 @@ int main() {
 using namespace std;
 
 int main() {
-    cout << "Hello, World!" << endl;
-    
-    // Try a simple calculation
-    int result = 5 + 7;
-    cout << "5 + 7 = " << result << endl;
+    // Print numbers 0 to 4 using a loop
+    for (int i = 0; i < 5; i++) {
+        cout << i << endl;
+    }
     
     return 0;
 }`;
@@ -94,6 +88,286 @@ interface DebugState {
     cpuUsage: number;
   };
 }
+
+// Simulate compiler and runtime execution for different languages
+const executeCode = (code: string, language: ProgrammingLanguage): { output: string; error: string | null } => {
+  try {
+    let output = "";
+    let error = null;
+
+    // Pre-compilation validation for each language to catch obvious errors
+    switch (language) {
+      case "python":
+        // Check for Python syntax errors
+        if (!code.includes("print") && code.includes("for") && !code.includes(":")) {
+          throw new Error("SyntaxError: expected ':' at the end of the 'for' statement");
+        }
+        break;
+      case "java":
+        // Check for basic Java errors
+        if (!code.includes("class")) {
+          throw new Error("Error: no class definition found");
+        }
+        if (!code.includes("public static void main")) {
+          throw new Error("Error: main method not found");
+        }
+        break;
+      case "c":
+      case "cpp":
+        // Check for basic C/C++ errors
+        if (!code.includes("main(")) {
+          throw new Error("Error: no main function defined");
+        }
+        if (code.includes("cout") && !code.includes("iostream")) {
+          throw new Error("Error: 'cout' used but <iostream> not included");
+        }
+        if (code.includes("printf") && !code.includes("stdio.h")) {
+          throw new Error("Error: 'printf' used but <stdio.h> not included");
+        }
+        break;
+    }
+
+    // Simulate execution for each language
+    switch (language) {
+      case "python":
+        // Extract and execute loop structures for Python
+        if (code.includes("for") && code.includes("range")) {
+          const forLoopMatch = code.match(/for\s+(\w+)\s+in\s+range\s*\(([^)]+)\):/);
+          if (forLoopMatch) {
+            const loopVar = forLoopMatch[1];
+            const rangeArgs = forLoopMatch[2].split(',').map(arg => parseInt(arg.trim()));
+            
+            let start = 0;
+            let end = 0;
+            let step = 1;
+            
+            if (rangeArgs.length === 1) {
+              end = rangeArgs[0];
+            } else if (rangeArgs.length === 2) {
+              start = rangeArgs[0];
+              end = rangeArgs[1];
+            } else if (rangeArgs.length === 3) {
+              start = rangeArgs[0];
+              end = rangeArgs[1];
+              step = rangeArgs[2];
+            }
+            
+            for (let i = start; i < end; i += step) {
+              // Check if there's a print statement inside the loop
+              if (code.includes("print")) {
+                const printMatch = code.match(/\s+print\s*\((.*?)\)/);
+                if (printMatch) {
+                  const printArg = printMatch[1].trim();
+                  if (printArg === loopVar) {
+                    output += i + "\n";
+                  } else if (printArg.includes(loopVar)) {
+                    // Handle simple expressions like "i + 1"
+                    try {
+                      const value = eval(printArg.replace(loopVar, i.toString()));
+                      output += value + "\n";
+                    } catch {
+                      output += printArg.replace(loopVar, i.toString()) + "\n";
+                    }
+                  } else {
+                    output += printArg.replace(/["']/g, "") + "\n";
+                  }
+                }
+              }
+            }
+          }
+        } else if (code.includes("print")) {
+          // Handle individual print statements
+          const printMatches = code.match(/print\s*\((.*?)\)/g);
+          if (printMatches) {
+            printMatches.forEach(match => {
+              const content = match.substring(match.indexOf('(') + 1, match.lastIndexOf(')'));
+              if (content.startsWith('"') || content.startsWith("'")) {
+                output += content.slice(1, -1) + "\n";
+              } else {
+                try {
+                  output += eval(content) + "\n";
+                } catch {
+                  output += content + "\n";
+                }
+              }
+            });
+          }
+        }
+        break;
+        
+      case "java":
+        // Extract and execute loop structures for Java
+        if (code.includes("for") && code.includes("System.out.println")) {
+          const forLoopMatch = code.match(/for\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\w+\s*<\s*(\d+)\s*;/);
+          if (forLoopMatch) {
+            const loopVar = forLoopMatch[1];
+            const start = parseInt(forLoopMatch[2]);
+            const end = parseInt(forLoopMatch[3]);
+            
+            const printMatch = code.match(/System\.out\.println\s*\((.*?)\)/);
+            if (printMatch) {
+              const printArg = printMatch[1].trim();
+              
+              for (let i = start; i < end; i++) {
+                if (printArg === loopVar) {
+                  output += i + "\n";
+                } else if (printArg.includes(loopVar)) {
+                  // Handle simple expressions like "i + 1"
+                  try {
+                    const value = eval(printArg.replace(loopVar, i.toString()));
+                    output += value + "\n";
+                  } catch {
+                    output += printArg.replace(loopVar, i.toString()) + "\n";
+                  }
+                } else if (printArg.startsWith('"') && printArg.endsWith('"')) {
+                  output += printArg.slice(1, -1) + "\n";
+                } else {
+                  output += printArg + "\n";
+                }
+              }
+            }
+          }
+        } else if (code.includes("System.out.println")) {
+          // Handle individual print statements
+          const printMatches = code.match(/System\.out\.println\s*\((.*?)\)/g);
+          if (printMatches) {
+            printMatches.forEach(match => {
+              const content = match.substring(match.indexOf('(') + 1, match.lastIndexOf(')'));
+              if (content.startsWith('"') && content.endsWith('"')) {
+                output += content.slice(1, -1) + "\n";
+              } else {
+                try {
+                  output += eval(content) + "\n";
+                } catch {
+                  output += content + "\n";
+                }
+              }
+            });
+          }
+        }
+        break;
+        
+      case "c":
+        // Extract and execute loop structures for C
+        if (code.includes("for") && code.includes("printf")) {
+          const forLoopMatch = code.match(/for\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\w+\s*<\s*(\d+)\s*;/);
+          if (forLoopMatch) {
+            const loopVar = forLoopMatch[1];
+            const start = parseInt(forLoopMatch[2]);
+            const end = parseInt(forLoopMatch[3]);
+            
+            const printMatch = code.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/);
+            if (printMatch) {
+              let formatStr = printMatch[1];
+              const printArg = printMatch[2]?.trim();
+              
+              for (let i = start; i < end; i++) {
+                if (printArg === loopVar) {
+                  output += formatStr.replace(/%d|%i/, i).replace(/\\n/g, '\n');
+                } else if (printArg && printArg.includes(loopVar)) {
+                  try {
+                    const value = eval(printArg.replace(loopVar, i.toString()));
+                    output += formatStr.replace(/%d|%i/, value).replace(/\\n/g, '\n');
+                  } catch {
+                    output += formatStr.replace(/%d|%i/, printArg.replace(loopVar, i.toString())).replace(/\\n/g, '\n');
+                  }
+                } else {
+                  output += formatStr.replace(/\\n/g, '\n');
+                }
+              }
+            }
+          }
+        } else if (code.includes("printf")) {
+          // Handle individual printf statements
+          const printfMatches = code.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/g);
+          if (printfMatches) {
+            printfMatches.forEach(match => {
+              const formatMatch = match.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/);
+              if (formatMatch) {
+                let formatStr = formatMatch[1];
+                const args = formatMatch[2]?.split(',').map(arg => arg.trim()) || [];
+                
+                let result = formatStr;
+                args.forEach((arg, index) => {
+                  try {
+                    const value = eval(arg);
+                    result = result.replace(/%d|%i|%f|%s/, value);
+                  } catch {
+                    result = result.replace(/%d|%i|%f|%s/, arg);
+                  }
+                });
+                
+                output += result.replace(/\\n/g, '\n');
+              }
+            });
+          }
+        }
+        break;
+        
+      case "cpp":
+        // Extract and execute loop structures for C++
+        if (code.includes("for") && code.includes("cout")) {
+          const forLoopMatch = code.match(/for\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\w+\s*<\s*(\d+)\s*;/);
+          if (forLoopMatch) {
+            const loopVar = forLoopMatch[1];
+            const start = parseInt(forLoopMatch[2]);
+            const end = parseInt(forLoopMatch[3]);
+            
+            const coutMatch = code.match(/cout\s*<<\s*(.*?)\s*(?:<<\s*endl)?;/);
+            if (coutMatch) {
+              const coutArg = coutMatch[1].trim();
+              
+              for (let i = start; i < end; i++) {
+                if (coutArg === loopVar) {
+                  output += i + "\n";
+                } else if (coutArg.includes(loopVar)) {
+                  try {
+                    const value = eval(coutArg.replace(loopVar, i.toString()));
+                    output += value + "\n";
+                  } catch {
+                    output += coutArg.replace(loopVar, i.toString()) + "\n";
+                  }
+                } else if (coutArg.startsWith('"') && coutArg.endsWith('"')) {
+                  output += coutArg.slice(1, -1) + "\n";
+                } else {
+                  output += coutArg + "\n";
+                }
+              }
+            }
+          }
+        } else if (code.includes("cout")) {
+          // Handle individual cout statements
+          const coutMatches = code.match(/cout\s*<<\s*(.*?)\s*(?:<<\s*endl)?;/g);
+          if (coutMatches) {
+            coutMatches.forEach(match => {
+              // Extract the content being output
+              let content = match.replace(/cout\s*<<\s*/, '').replace(/\s*<<\s*endl\s*;/, '');
+              
+              if (content.startsWith('"') && content.endsWith('"')) {
+                output += content.slice(1, -1) + "\n";
+              } else if (content === "endl") {
+                output += "\n";
+              } else {
+                try {
+                  output += eval(content) + "\n";
+                } catch {
+                  output += content + "\n";
+                }
+              }
+            });
+          }
+        }
+        break;
+    }
+
+    return { output, error };
+  } catch (error) {
+    return { 
+      output: "", 
+      error: error instanceof Error ? error.message : "Unknown error occurred" 
+    };
+  }
+};
 
 const CodeTerminal = () => {
   const [code, setCode] = useState("");
@@ -134,130 +408,83 @@ const CodeTerminal = () => {
     setIsRunning(true);
     setDebugState(prev => ({ ...prev, isDebugging: false, currentLine: 0 }));
     
-    const compileMessage = `[${language.toUpperCase()}] Compiling code...\n`;
-    const runtimeMessage = `[${language.toUpperCase()}] Executing program...\n`;
+    // Create compiler messages
+    let outputBuffer = "";
     
-    // Simulated compilation and execution
-    const executeCode = () => {
-      try {
-        let result = "";
-        
-        switch (language) {
-          case "python":
-            if (code.includes("print")) {
-              const printMatches = code.match(/print\((.*?)\)/g);
-              if (printMatches) {
-                result = printMatches
-                  .map(match => {
-                    const content = match.substring(6, match.length - 1);
-                    return content.startsWith('"') || content.startsWith("'") 
-                      ? content.slice(1, -1) 
-                      : eval(content);
-                  })
-                  .join("\n");
-              }
-            } else if (code.trim()) {
-              result = String(eval(code));
-            }
-            break;
-            
-          case "java":
-            if (code.includes("System.out.println")) {
-              const printMatches = code.match(/System\.out\.println\((.*?)\)/g);
-              if (printMatches) {
-                result = printMatches
-                  .map(match => {
-                    const content = match.substring(19, match.length - 1);
-                    return content.startsWith('"') ? content.slice(1, -1) : eval(content);
-                  })
-                  .join("\n");
-              }
-            }
-            break;
-            
-          case "c":
-          case "cpp":
-            if (code.includes("printf") || code.includes("cout")) {
-              const printfMatches = code.match(/printf\((.*?)\)/g);
-              const coutMatches = code.match(/cout\s*<<\s*(.*?)(;|<<)/g);
-              
-              if (printfMatches) {
-                result = printfMatches
-                  .map(match => {
-                    const content = match.substring(7, match.length - 1);
-                    const parts = content.split(',');
-                    if (parts.length === 1) {
-                      return content.startsWith('"') ? content.slice(1, -1) : eval(content);
-                    } else {
-                      // Simple format string handling
-                      let formatStr = parts[0].slice(1, -1);
-                      formatStr = formatStr.replace(/\\n/g, '\n');
-                      return formatStr.replace(/%d|%s|%f/g, "value");
-                    }
-                  })
-                  .join("\n");
-              } else if (coutMatches) {
-                result = coutMatches
-                  .map(match => {
-                    // Remove 'cout <<' and potential trailing '<<' or ';'
-                    let content = match.replace(/cout\s*<<\s*/, '').replace(/;$|<<$/, '').trim();
-                    if (content.startsWith('"') && content.endsWith('"')) {
-                      return content.slice(1, -1);
-                    } else if (content === "endl") {
-                      return "\n";
-                    } else {
-                      return content;
-                    }
-                  })
-                  .join("");
-              }
-            }
-            break;
-        }
-        
-        // Simulate potential errors
-        if (Math.random() < 0.05) {
-          throw new Error("Random runtime error simulated for testing");
-        }
-        
-        return result;
-      } catch (error) {
-        return `Runtime Error: ${error.message}`;
-      }
-    };
-
+    // Compilation phase message
+    const compilerName = {
+      python: "Python Interpreter 3.9.0",
+      java: "javac 11.0.12",
+      c: "gcc 10.2.0",
+      cpp: "g++ 10.2.0"
+    }[language];
+    
+    outputBuffer += `[${language.toUpperCase()}] Using ${compilerName}\n`;
+    outputBuffer += `[${language.toUpperCase()}] Compiling code...\n`;
+    
     // Simulate network delay for compilation
     setTimeout(() => {
       try {
         const startTime = performance.now();
-        const result = executeCode();
-        const endTime = performance.now();
-        const executionTime = (endTime - startTime).toFixed(2);
         
-        // Update output with execution results
-        const successMessage = `Execution completed in ${executionTime}ms with exit code 0.\n`;
-        const outputMessage = `${compileMessage}${runtimeMessage}${successMessage}\nOutput:\n${result}`;
-        setOutput(outputMessage);
+        // Execute the code
+        const { output, error } = executeCode(code, language);
         
-        // Show success toast
-        toast({
-          title: "Execution Complete",
-          description: `Code executed successfully in ${executionTime}ms.`,
-        });
+        if (error) {
+          // Handle compilation/runtime errors
+          outputBuffer += `Error: ${error}\n`;
+          outputBuffer += `[${language.toUpperCase()}] Compilation failed with exit code 1\n`;
+          
+          setOutput(outputBuffer);
+          
+          toast({
+            title: "Execution Failed",
+            description: error,
+            variant: "destructive",
+          });
+        } else {
+          // Successful execution
+          const endTime = performance.now();
+          const executionTime = (endTime - startTime).toFixed(2);
+          
+          outputBuffer += `[${language.toUpperCase()}] Compilation successful\n`;
+          outputBuffer += `[${language.toUpperCase()}] Running executable...\n`;
+          outputBuffer += `[${language.toUpperCase()}] Execution completed in ${executionTime}ms with exit code 0\n`;
+          outputBuffer += `\nOutput:\n${output}`;
+          
+          setOutput(outputBuffer);
+          
+          toast({
+            title: "Execution Complete",
+            description: `Code executed successfully in ${executionTime}ms.`,
+          });
+          
+          // Update memory stats
+          const memoryUsed = Math.floor(Math.random() * 50 + 20); // 20-70 MB
+          setDebugState(prev => ({
+            ...prev,
+            memoryStats: {
+              ...prev.memoryStats,
+              heapUsed: memoryUsed * 1024 * 1024,
+              timeElapsed: parseFloat(executionTime),
+              cpuUsage: Math.floor(Math.random() * 30 + 10), // 10-40% CPU usage
+            }
+          }));
+        }
       } catch (error) {
-        // Handle any unexpected errors
-        const errorMessage = `${compileMessage}Error during execution: ${error.message}`;
-        setOutput(errorMessage);
+        // Handle unexpected errors
+        outputBuffer += `[${language.toUpperCase()}] Internal error: ${error instanceof Error ? error.message : "Unknown error"}\n`;
+        setOutput(outputBuffer);
         
         toast({
-          title: "Execution Failed",
-          description: error.message,
+          title: "System Error",
+          description: error instanceof Error ? error.message : "An unknown error occurred",
           variant: "destructive",
         });
       } finally {
         setIsRunning(false);
       }
-    }, 500 + Math.random() * 1000); // Random delay between 500ms and 1500ms
+    }, 800 + Math.random() * 700); // Random delay between 800ms and 1500ms
   };
 
   const handleDebug = () => {
