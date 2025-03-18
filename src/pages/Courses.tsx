@@ -8,6 +8,7 @@ import SearchFilterBar from "@/components/courses/SearchFilterBar";
 import FeaturedCourseList from "@/components/courses/FeaturedCourseList";
 import CourseList from "@/components/courses/CourseList";
 import { useFilteredCourses } from "@/hooks/useFilteredCourses";
+import { ApiCourse } from "@/types/course.types";
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -53,6 +54,9 @@ const Courses = () => {
     );
   }
 
+  // Filter out featured courses from regular courses list
+  const regularCourses = courses.filter(course => !('featured' in course && course.featured)) as ApiCourse[];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -89,7 +93,7 @@ const Courses = () => {
 
             {/* Regular Courses */}
             <CourseList 
-              courses={courses.filter(course => !('featured' in course && course.featured))} 
+              courses={regularCourses} 
               onCourseClick={handleCourseClick} 
               isFiltering={search !== "" || selectedCategory !== "all"}
             />

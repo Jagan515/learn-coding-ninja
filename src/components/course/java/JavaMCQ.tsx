@@ -1,13 +1,14 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MCQQuestion } from "../python/mcq/MCQQuestion";
-import { MCQOptions } from "../python/mcq/MCQOptions";
-import { MCQExplanation } from "../python/mcq/MCQExplanation";
-import { MCQNavigation } from "../python/mcq/MCQNavigation";
-import { MCQProgressBar } from "../python/mcq/MCQProgressBar";
-import { MCQItem } from "../python/mcq/types";
+import MCQQuestion from "../python/mcq/MCQQuestion";
+import MCQOptions from "../python/mcq/MCQOptions";
+import MCQExplanation from "../python/mcq/MCQExplanation";
+import MCQNavigation from "../python/mcq/MCQNavigation";
+import MCQProgressBar from "../python/mcq/MCQProgressBar";
+import { MCQItem as MCQItemType } from "../python/mcq/types";
+
+type MCQItem = MCQItemType;
 
 const javaMCQData: MCQItem[] = [
   {

@@ -20,7 +20,7 @@ export const useFilteredCourses = () => {
 
   // Combine API courses with featured courses
   const allCourses = useMemo(() => {
-    if (!apiCourses) return getFeaturedCourses();
+    if (!apiCourses) return getFeaturedCourses() as ApiCourse[];
     return [...apiCourses, ...getFeaturedCourses()];
   }, [apiCourses]);
 
@@ -52,10 +52,10 @@ export const useFilteredCourses = () => {
 
   // Get featured courses
   const featuredCourses = useMemo(() => {
-    return allCourses.filter(course => 
-      (course as any).featured === true || 
-      (course as any).popularity_score > 8
-    ).slice(0, 3);
+    return (allCourses.filter(course => 
+      (course as FeaturedCourse).featured === true || 
+      (course.popularity_score > 8)
+    ).slice(0, 3)) as FeaturedCourse[];
   }, [allCourses]);
 
   return {

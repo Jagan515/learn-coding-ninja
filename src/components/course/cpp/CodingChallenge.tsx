@@ -1,15 +1,17 @@
 
 import { useState } from "react";
+import { Challenge, ChallengeDifficulty, TestCase } from "@/types/course.types";
+import { Card, CardContent } from "@/components/ui/card";
 import ChallengeHeader from "../python/challenges/ChallengeHeader";
 import ChallengeCodeEditor from "../python/challenges/ChallengeCodeEditor";
 import ChallengeHints from "../python/challenges/ChallengeHints";
 import ChallengeTestCases from "../python/challenges/ChallengeTestCases";
 import ChallengeOutput from "../python/challenges/ChallengeOutput";
 
-const initialChallenge = {
+const initialChallenge: Challenge = {
   id: "cpp-sum-array",
   title: "Sum of Array Elements",
-  difficulty: "easy",
+  difficulty: "easy" as ChallengeDifficulty,
   description: "Write a function that calculates the sum of all elements in an integer array. The function should take a vector of integers as input and return the sum of all elements.",
   starterCode: `#include <iostream>
 #include <vector>
@@ -35,33 +37,33 @@ int main() {
   testCases: [
     {
       id: "test1",
-      description: "Sum of [1, 2, 3, 4, 5]",
-      expected: "15",
-      passed: false
+      input: "[1, 2, 3, 4, 5]",
+      output: "15",
+      explanation: "Sum of [1, 2, 3, 4, 5]"
     },
     {
       id: "test2",
-      description: "Sum of empty array []",
-      expected: "0",
-      passed: false
+      input: "[]",
+      output: "0",
+      explanation: "Sum of empty array []"
     },
     {
       id: "test3",
-      description: "Sum of [-1, -2, -3, -4, -5]",
-      expected: "-15",
-      passed: false
+      input: "[-1, -2, -3, -4, -5]",
+      output: "-15",
+      explanation: "Sum of [-1, -2, -3, -4, -5]"
     },
     {
       id: "test4",
-      description: "Sum of [10, 20, 30, 40, 50]",
-      expected: "150",
-      passed: false
+      input: "[10, 20, 30, 40, 50]",
+      output: "150",
+      explanation: "Sum of [10, 20, 30, 40, 50]"
     },
     {
       id: "test5",
-      description: "Sum of [5]",
-      expected: "5",
-      passed: false
+      input: "[5]",
+      output: "5",
+      explanation: "Sum of [5]"
     }
   ]
 };
@@ -165,7 +167,10 @@ const CodingChallenge = () => {
         
         <div>
           <ChallengeTestCases 
-            testCases={challenge.testCases}
+            testCases={challenge.testCases.map(tc => ({
+              ...tc,
+              passed: tc.passed || false
+            }))}
             totalCases={challenge.testCases.length}
           />
         </div>

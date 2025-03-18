@@ -80,6 +80,8 @@ const CCodingChallenge = () => {
     ...tc,
     passed: false
   })));
+  // Add missing state for hints
+  const [currentHint, setCurrentHint] = useState(0);
 
   const handleRunCode = () => {
     // Simulating code execution and test results
@@ -104,11 +106,17 @@ const CCodingChallenge = () => {
     }, 1500);
   };
 
+  const handleNextHint = () => {
+    if (currentHint < challenge.hints.length - 1) {
+      setCurrentHint(currentHint + 1);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <ChallengeHeader 
-        title={challenge.title} 
-        difficulty={challenge.difficulty as ChallengeDifficulty} 
+        challenge={challenge}
+        solved={false}
       />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -133,11 +141,18 @@ const CCodingChallenge = () => {
                 
                 <Separator />
                 
-                <ChallengeTestCases testCases={testCases} />
+                <ChallengeTestCases 
+                  testCases={testCases} 
+                  totalCases={testCases.length}
+                />
               </TabsContent>
               
               <TabsContent value="hints">
-                <ChallengeHints hints={challenge.hints} />
+                <ChallengeHints 
+                  hints={challenge.hints}
+                  currentHint={currentHint}
+                  onNextHint={handleNextHint}
+                />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -159,8 +174,11 @@ const CCodingChallenge = () => {
               
               <ChallengeCodeEditor 
                 code={code} 
-                language="c"
-                onChange={setCode}
+                onCodeChange={setCode}
+                onRun={handleRunCode}
+                onToggleHints={() => setActiveTab(activeTab === "hints" ? "description" : "hints")}
+                showHints={activeTab === "hints"}
+                running={false}
               />
             </CardContent>
           </Card>
