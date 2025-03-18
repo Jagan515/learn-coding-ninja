@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Challenge, ChallengeDifficulty, TestCase } from "@/types/course.types";
+import { Challenge, TestCase } from "@/types/course.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,9 @@ import ChallengeCodeEditor from "../python/challenges/ChallengeCodeEditor";
 import ChallengeTestCases from "../python/challenges/ChallengeTestCases";
 import ChallengeHints from "../python/challenges/ChallengeHints";
 import ChallengeOutput from "../python/challenges/ChallengeOutput";
+
+// Import Challenge type from the shared types
+import { Challenge as PythonChallenge } from "../python/types/challenge.types";
 
 const challenge: Challenge = {
   id: "c-challenge-1",
@@ -54,19 +57,22 @@ int main() {
       id: "test1",
       input: "[1, 2, 3, 4, 5]",
       output: "[5, 4, 3, 2, 1]",
-      explanation: "Basic test case with odd number of elements"
+      explanation: "Basic test case with odd number of elements",
+      passed: false
     },
     {
       id: "test2",
       input: "[10, 20, 30, 40]",
       output: "[40, 30, 20, 10]",
-      explanation: "Test with even number of elements"
+      explanation: "Test with even number of elements",
+      passed: false
     },
     {
       id: "test3",
       input: "[42]",
       output: "[42]",
-      explanation: "Edge case with a single element array"
+      explanation: "Edge case with a single element array",
+      passed: false
     }
   ]
 };
@@ -76,12 +82,20 @@ const CCodingChallenge = () => {
   const [activeTab, setActiveTab] = useState("description");
   const [runOutput, setRunOutput] = useState<string | null>(null);
   const [allTestsPassed, setAllTestsPassed] = useState(false);
-  const [testCases, setTestCases] = useState(challenge.testCases.map(tc => ({
-    ...tc,
-    passed: false
-  })));
-  // Add missing state for hints
+  const [testCases, setTestCases] = useState(challenge.testCases);
   const [currentHint, setCurrentHint] = useState(0);
+
+  // Convert the challenge to the Python challenge format for the components
+  const pythonChallenge: PythonChallenge = {
+    ...challenge,
+    id: challenge.id,
+    title: challenge.title,
+    description: challenge.description,
+    difficulty: challenge.difficulty,
+    starterCode: challenge.starterCode,
+    hints: challenge.hints,
+    testCases: testCases
+  };
 
   const handleRunCode = () => {
     // Simulating code execution and test results
@@ -115,7 +129,7 @@ const CCodingChallenge = () => {
   return (
     <div className="space-y-6">
       <ChallengeHeader 
-        challenge={challenge}
+        challenge={pythonChallenge}
         solved={false}
       />
       

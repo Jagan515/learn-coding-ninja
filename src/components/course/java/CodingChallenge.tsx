@@ -12,6 +12,9 @@ import ChallengeTestCases from "../python/challenges/ChallengeTestCases";
 import ChallengeHints from "../python/challenges/ChallengeHints";
 import ChallengeOutput from "../python/challenges/ChallengeOutput";
 
+// Import Challenge type from Python challenges
+import { Challenge as PythonChallenge } from "../python/types/challenge.types";
+
 const challenge: Challenge = {
   id: "java-challenge-1",
   title: "Palindrome Checker",
@@ -56,19 +59,22 @@ const challenge: Challenge = {
       id: "test1",
       input: "racecar",
       output: "true",
-      explanation: "Basic test case, 'racecar' reads the same forward and backward"
+      explanation: "Basic test case, 'racecar' reads the same forward and backward",
+      passed: false
     },
     {
       id: "test2",
       input: "A man, a plan, a canal, Panama",
       output: "true",
-      explanation: "Test case with spaces, punctuation, and mixed case"
+      explanation: "Test case with spaces, punctuation, and mixed case",
+      passed: false
     },
     {
       id: "test3",
       input: "hello",
       output: "false",
-      explanation: "Not a palindrome"
+      explanation: "Not a palindrome",
+      passed: false
     }
   ]
 };
@@ -78,12 +84,20 @@ const JavaCodingChallenge = () => {
   const [activeTab, setActiveTab] = useState("description");
   const [runOutput, setRunOutput] = useState<string | null>(null);
   const [allTestsPassed, setAllTestsPassed] = useState(false);
-  const [testCases, setTestCases] = useState(challenge.testCases.map(tc => ({
-    ...tc,
-    passed: false
-  })));
-  // Add missing state for hints
+  const [testCases, setTestCases] = useState(challenge.testCases);
   const [currentHint, setCurrentHint] = useState(0);
+
+  // Convert to Python challenge format for the components
+  const pythonChallenge: PythonChallenge = {
+    ...challenge,
+    id: challenge.id,
+    title: challenge.title,
+    description: challenge.description,
+    difficulty: challenge.difficulty,
+    starterCode: challenge.starterCode,
+    hints: challenge.hints,
+    testCases: testCases
+  };
 
   const handleRunCode = () => {
     // Simulating code execution and test results
@@ -117,7 +131,7 @@ const JavaCodingChallenge = () => {
   return (
     <div className="space-y-6">
       <ChallengeHeader 
-        challenge={challenge}
+        challenge={pythonChallenge}
         solved={false}
       />
       

@@ -12,6 +12,9 @@ import ChallengeTestCases from "../python/challenges/ChallengeTestCases";
 import ChallengeHints from "../python/challenges/ChallengeHints";
 import ChallengeOutput from "../python/challenges/ChallengeOutput";
 
+// Import Challenge type from Python challenges
+import { Challenge as PythonChallenge } from "../python/types/challenge.types";
+
 const challenge: Challenge = {
   id: "dsa-challenge-1",
   title: "Two Sum Problem",
@@ -37,19 +40,22 @@ const challenge: Challenge = {
       id: "test1",
       input: "nums = [2, 7, 11, 15], target = 9",
       output: "[0, 1]",
-      explanation: "2 + 7 = 9, so return the indices [0, 1]"
+      explanation: "2 + 7 = 9, so return the indices [0, 1]",
+      passed: false
     },
     {
       id: "test2",
       input: "nums = [3, 2, 4], target = 6",
       output: "[1, 2]",
-      explanation: "2 + 4 = 6, so return the indices [1, 2]"
+      explanation: "2 + 4 = 6, so return the indices [1, 2]",
+      passed: false
     },
     {
       id: "test3",
       input: "nums = [3, 3], target = 6",
       output: "[0, 1]",
-      explanation: "3 + 3 = 6, so return the indices [0, 1]"
+      explanation: "3 + 3 = 6, so return the indices [0, 1]",
+      passed: false
     }
   ]
 };
@@ -59,12 +65,20 @@ const DSACodingChallenge = () => {
   const [activeTab, setActiveTab] = useState("description");
   const [runOutput, setRunOutput] = useState<string | null>(null);
   const [allTestsPassed, setAllTestsPassed] = useState(false);
-  const [testCases, setTestCases] = useState(challenge.testCases.map(tc => ({
-    ...tc,
-    passed: false
-  })));
-  // Add missing state for hints
+  const [testCases, setTestCases] = useState(challenge.testCases);
   const [currentHint, setCurrentHint] = useState(0);
+
+  // Convert to Python challenge format for the components
+  const pythonChallenge: PythonChallenge = {
+    ...challenge,
+    id: challenge.id,
+    title: challenge.title,
+    description: challenge.description,
+    difficulty: challenge.difficulty,
+    starterCode: challenge.starterCode,
+    hints: challenge.hints,
+    testCases: testCases
+  };
 
   const handleRunCode = () => {
     // Simulating code execution and test results
@@ -98,7 +112,7 @@ const DSACodingChallenge = () => {
   return (
     <div className="space-y-6">
       <ChallengeHeader 
-        challenge={challenge}
+        challenge={pythonChallenge}
         solved={false}
       />
       

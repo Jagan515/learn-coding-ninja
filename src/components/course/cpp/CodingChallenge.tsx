@@ -8,6 +8,9 @@ import ChallengeHints from "../python/challenges/ChallengeHints";
 import ChallengeTestCases from "../python/challenges/ChallengeTestCases";
 import ChallengeOutput from "../python/challenges/ChallengeOutput";
 
+// Import Challenge type from the Python challenge types
+import { Challenge as PythonChallenge } from "../python/types/challenge.types";
+
 const initialChallenge: Challenge = {
   id: "cpp-sum-array",
   title: "Sum of Array Elements",
@@ -39,31 +42,36 @@ int main() {
       id: "test1",
       input: "[1, 2, 3, 4, 5]",
       output: "15",
-      explanation: "Sum of [1, 2, 3, 4, 5]"
+      explanation: "Sum of [1, 2, 3, 4, 5]",
+      passed: false
     },
     {
       id: "test2",
       input: "[]",
       output: "0",
-      explanation: "Sum of empty array []"
+      explanation: "Sum of empty array []",
+      passed: false
     },
     {
       id: "test3",
       input: "[-1, -2, -3, -4, -5]",
       output: "-15",
-      explanation: "Sum of [-1, -2, -3, -4, -5]"
+      explanation: "Sum of [-1, -2, -3, -4, -5]",
+      passed: false
     },
     {
       id: "test4",
       input: "[10, 20, 30, 40, 50]",
       output: "150",
-      explanation: "Sum of [10, 20, 30, 40, 50]"
+      explanation: "Sum of [10, 20, 30, 40, 50]",
+      passed: false
     },
     {
       id: "test5",
       input: "[5]",
       output: "5",
-      explanation: "Sum of [5]"
+      explanation: "Sum of [5]",
+      passed: false
     }
   ]
 };
@@ -76,6 +84,18 @@ const CodingChallenge = () => {
   const [currentHint, setCurrentHint] = useState(0);
   const [runOutput, setRunOutput] = useState<string | null>(null);
   const [solved, setSolved] = useState(false);
+
+  // Convert to Python challenge format for the components
+  const pythonChallenge: PythonChallenge = {
+    ...challenge,
+    id: challenge.id,
+    title: challenge.title,
+    description: challenge.description,
+    difficulty: challenge.difficulty,
+    starterCode: challenge.starterCode,
+    hints: challenge.hints,
+    testCases: challenge.testCases
+  };
 
   const handleCodeChange = (value: string) => {
     setCode(value);
@@ -132,7 +152,7 @@ const CodingChallenge = () => {
   return (
     <div className="space-y-6 animate-fadeIn">
       <ChallengeHeader 
-        challenge={challenge} 
+        challenge={pythonChallenge} 
         solved={solved} 
       />
 
@@ -167,10 +187,7 @@ const CodingChallenge = () => {
         
         <div>
           <ChallengeTestCases 
-            testCases={challenge.testCases.map(tc => ({
-              ...tc,
-              passed: tc.passed || false
-            }))}
+            testCases={challenge.testCases}
             totalCases={challenge.testCases.length}
           />
         </div>

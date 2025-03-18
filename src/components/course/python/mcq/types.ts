@@ -13,7 +13,6 @@ export interface MCQuestion {
   explanation: string;
 }
 
-// Adding MCQItem type which was missing and causing errors
 export interface MCQItem {
   id: string;
   question: string;

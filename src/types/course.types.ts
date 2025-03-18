@@ -68,7 +68,7 @@ export interface TestCase {
   input: string;
   output: string;
   explanation: string;
-  passed?: boolean;
+  passed: boolean; // Changed from optional to required to match Python challenge types
 }
 
 export interface Challenge {
