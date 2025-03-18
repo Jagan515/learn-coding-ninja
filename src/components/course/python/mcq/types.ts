@@ -12,3 +12,12 @@ export interface MCQuestion {
   correctOption: string;
   explanation: string;
 }
+
+// Adding MCQItem type which was missing and causing errors
+export interface MCQItem {
+  id: string;
+  question: string;
+  options: string[];
+  correctOptionIndex: number;
+  explanation: string;
+}

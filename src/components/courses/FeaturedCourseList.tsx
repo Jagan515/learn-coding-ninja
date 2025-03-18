@@ -29,9 +29,8 @@ const FeaturedCourseList = ({ courses, onCourseClick }: FeaturedCourseListProps)
               duration={`${course.estimated_hours}h`}
               progress={0}
               lessons={lessonCount}
-              language={course.programming_language}
+              language={course.programming_language || ""}
               onClick={() => onCourseClick(course.id)}
-              // Removed 'featured' prop since it's not in CourseCardProps
             />
           );
         })}

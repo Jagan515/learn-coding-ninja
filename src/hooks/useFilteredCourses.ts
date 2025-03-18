@@ -18,11 +18,14 @@ export const useFilteredCourses = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedDifficulty, setSelectedDifficulty] = useState("all");
 
+  // Define featured courses separately with the proper type
+  const featuredCoursesData = useMemo(() => getFeaturedCourses(), []);
+
   // Combine API courses with featured courses
   const allCourses = useMemo(() => {
-    if (!apiCourses) return getFeaturedCourses() as ApiCourse[];
-    return [...apiCourses, ...getFeaturedCourses()];
-  }, [apiCourses]);
+    if (!apiCourses) return featuredCoursesData as ApiCourse[];
+    return [...apiCourses, ...featuredCoursesData] as ApiCourse[];
+  }, [apiCourses, featuredCoursesData]);
 
   // Filter courses based on search, category, and difficulty
   const filteredCourses = useMemo(() => {
@@ -33,7 +36,8 @@ export const useFilteredCourses = () => {
       
       const matchesCategory = !selectedCategory || 
         selectedCategory === "all" || 
-        course.category_id === selectedCategory;
+        // Safely check for category_id
+        (course.category_id && course.category_id === selectedCategory);
       
       const matchesDifficulty = !selectedDifficulty || 
         selectedDifficulty === "all" || 
@@ -53,8 +57,8 @@ export const useFilteredCourses = () => {
   // Get featured courses
   const featuredCourses = useMemo(() => {
     return (allCourses.filter(course => 
-      (course as FeaturedCourse).featured === true || 
-      (course.popularity_score > 8)
+      (course as any).featured === true || 
+      (course.popularity_score !== undefined && course.popularity_score > 8)
     ).slice(0, 3)) as FeaturedCourse[];
   }, [allCourses]);
 
