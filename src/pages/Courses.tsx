@@ -12,14 +12,13 @@ import { useFilteredCourses } from "@/hooks/useFilteredCourses";
 const Courses = () => {
   const navigate = useNavigate();
   const { 
+    courses,
+    featuredCourses,
     search, 
     setSearch, 
     selectedCategory, 
     setSelectedCategory,
-    filteredCourses,
-    featuredCourses,
-    apiCourses,
-    isLoadingCourses 
+    isLoading 
   } = useFilteredCourses();
 
   const handleCourseClick = (courseId: string) => {
@@ -39,7 +38,7 @@ const Courses = () => {
     }
   };
 
-  if (isLoadingCourses) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -84,13 +83,13 @@ const Courses = () => {
 
             {/* Featured Courses Section */}
             <FeaturedCourseList 
-              courses={filteredCourses.filter(course => 'featured' in course && course.featured)} 
+              courses={featuredCourses} 
               onCourseClick={handleCourseClick} 
             />
 
             {/* Regular Courses */}
             <CourseList 
-              courses={filteredCourses.filter(course => !('featured' in course && course.featured)) as any[]} 
+              courses={courses.filter(course => !('featured' in course && course.featured))} 
               onCourseClick={handleCourseClick} 
               isFiltering={search !== "" || selectedCategory !== "all"}
             />

@@ -18,6 +18,10 @@ import Discussion from "./pages/Discussion";
 import ThreadDetail from "./pages/ThreadDetail";
 import NewThread from "./pages/NewThread";
 import PythonCourse from "./pages/PythonCourse";
+import CppCourse from "./pages/CppCourse";
+import CCourse from "./pages/CCourse";
+import JavaCourse from "./pages/JavaCourse";
+import DSACourse from "./pages/DSACourse";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +39,10 @@ const App = () => (
               <Route path="/courses" element={<Courses />} />
               <Route path="/courses/:courseId" element={<CourseDetails />} />
               <Route path="/courses/python" element={<PythonCourse />} />
+              <Route path="/courses/cpp" element={<CppCourse />} />
+              <Route path="/courses/c" element={<CCourse />} />
+              <Route path="/courses/java" element={<JavaCourse />} />
+              <Route path="/courses/dsa" element={<DSACourse />} />
               <Route
                 path="/dashboard"
                 element={

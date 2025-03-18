@@ -1,6 +1,6 @@
 
-import { useMemo } from "react";
-import { useCourses } from "./useCourses";
+import { useMemo, useState } from "react";
+import { useCourses, getFeaturedCourses } from "./useCourses";
 import { useCourseCategories } from "./useCourseCategories";
 import type { ApiCourse, FeaturedCourse } from "@/types/course.types";
 import { calculateLessonCount } from "@/types/course.types";
@@ -11,64 +11,70 @@ export type CourseFilters = {
   difficulty: string;
 };
 
-interface UseFilteredCoursesProps {
-  filters: CourseFilters;
-}
-
-export const useFilteredCourses = ({ filters }: UseFilteredCoursesProps) => {
-  const { data: courses, isLoading: isLoadingCourses } = useCourses();
+export const useFilteredCourses = () => {
+  const { data: apiCourses, isLoading: isLoadingCourses } = useCourses();
   const { data: categories, isLoading: isLoadingCategories } = useCourseCategories();
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("all");
 
+  // Combine API courses with featured courses
+  const allCourses = useMemo(() => {
+    if (!apiCourses) return getFeaturedCourses();
+    return [...apiCourses, ...getFeaturedCourses()];
+  }, [apiCourses]);
+
+  // Filter courses based on search, category, and difficulty
   const filteredCourses = useMemo(() => {
-    if (!courses) return [];
-
-    return courses.filter((course) => {
-      const matchesQuery =
-        !filters.query ||
-        course.title.toLowerCase().includes(filters.query.toLowerCase()) ||
-        course.description.toLowerCase().includes(filters.query.toLowerCase());
-
-      const matchesCategory =
-        !filters.category || filters.category === "all" || course.category_id === filters.category;
-
-      const matchesDifficulty =
-        !filters.difficulty ||
-        filters.difficulty === "all" ||
-        course.difficulty === filters.difficulty;
-
-      return matchesQuery && matchesCategory && matchesDifficulty;
+    return allCourses.filter((course) => {
+      const matchesSearch = !search || 
+        course.title.toLowerCase().includes(search.toLowerCase()) || 
+        course.description.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesCategory = !selectedCategory || 
+        selectedCategory === "all" || 
+        course.category_id === selectedCategory;
+      
+      const matchesDifficulty = !selectedDifficulty || 
+        selectedDifficulty === "all" || 
+        course.difficulty === selectedDifficulty;
+      
+      return matchesSearch && matchesCategory && matchesDifficulty;
     });
-  }, [courses, filters]);
-
-  const isLoading = isLoadingCourses || isLoadingCategories;
+  }, [allCourses, search, selectedCategory, selectedDifficulty]);
 
   // Calculate total lessons across all courses
   const totalLessons = useMemo(() => {
-    if (!courses) return 0;
-    
-    return courses.reduce((total, course) => {
+    return allCourses.reduce((total, course) => {
       return total + calculateLessonCount(course);
     }, 0);
-  }, [courses]);
+  }, [allCourses]);
 
   // Get featured courses
   const featuredCourses = useMemo(() => {
-    if (!courses) return [];
-    
-    // Filter courses that are marked as featured or have high popularity
-    return courses
-      .filter((course) => 
-        (course as any).featured === true || 
-        (course as any).popularity_score > 8
-      )
-      .slice(0, 3); // Limit to 3 featured courses
-  }, [courses]);
+    return allCourses.filter(course => 
+      (course as any).featured === true || 
+      (course as any).popularity_score > 8
+    ).slice(0, 3);
+  }, [allCourses]);
 
   return {
     courses: filteredCourses,
     categories,
-    isLoading,
+    isLoading: isLoadingCourses || isLoadingCategories,
     totalLessons,
     featuredCourses,
+    search,
+    setSearch,
+    selectedCategory,
+    setSelectedCategory,
+    selectedDifficulty,
+    setSelectedDifficulty,
+    apiCourses: allCourses,
+    isLoadingCourses
   };
 };
+
+// Export types for use in other components
+export type { ApiCourse, FeaturedCourse };
+export { calculateLessonCount };

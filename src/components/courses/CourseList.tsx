@@ -1,7 +1,7 @@
 
 import { BookOpen } from "lucide-react";
 import CourseCard from "@/components/CourseCard";
-import { ApiCourse, calculateLessonCount } from "@/hooks/useFilteredCourses";
+import { ApiCourse, calculateLessonCount } from "@/types/course.types";
 
 interface CourseListProps {
   courses: ApiCourse[];
