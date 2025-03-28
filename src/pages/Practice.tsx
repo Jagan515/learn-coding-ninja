@@ -1,181 +1,419 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Search,
-  Code2,
-  BookOpen,
-  Star,
-  MessageSquare,
-  ChevronRight,
-  Loader2
-} from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
-import ChatInterface from "@/components/ChatInterface";
-import { useChallenges, Challenge } from "@/hooks/useChallenges";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { BookOpen, Brain, Code, Filter, BarChart, CheckCircle, ArrowRight, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
 
-const difficultyColors: Record<Challenge["difficulty"], string> = {
-  beginner: "bg-green-500/10 text-green-500",
-  intermediate: "bg-yellow-500/10 text-yellow-500",
-  advanced: "bg-red-500/10 text-red-500",
-};
+// Mock data
+const challenges = [
+  {
+    id: 1,
+    title: "Reverse a String",
+    difficulty: "Easy",
+    category: "String Manipulation",
+    completed: true,
+    language: "Python",
+    path: "python",
+  },
+  {
+    id: 2,
+    title: "Find Maximum Value",
+    difficulty: "Easy",
+    category: "Arrays",
+    completed: true,
+    language: "Python",
+    path: "python",
+  },
+  {
+    id: 3,
+    title: "Implement Binary Search",
+    difficulty: "Medium",
+    category: "Algorithms",
+    completed: false,
+    language: "Python",
+    path: "python",
+  },
+  {
+    id: 4,
+    title: "Linked List Operations",
+    difficulty: "Medium",
+    category: "Data Structures",
+    completed: false,
+    language: "C++",
+    path: "cpp",
+  },
+  {
+    id: 5,
+    title: "Graph Traversal",
+    difficulty: "Hard",
+    category: "Algorithms",
+    completed: false,
+    language: "Java",
+    path: "java",
+  },
+  {
+    id: 6,
+    title: "Memory Management",
+    difficulty: "Hard",
+    category: "System",
+    completed: false,
+    language: "C",
+    path: "c",
+  },
+];
 
 const Practice = () => {
-  const { toast } = useToast();
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all");
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string[]>([]);
+  
+  const toggleDifficulty = (difficulty: string) => {
+    if (selectedDifficulty.includes(difficulty)) {
+      setSelectedDifficulty(selectedDifficulty.filter(d => d !== difficulty));
+    } else {
+      setSelectedDifficulty([...selectedDifficulty, difficulty]);
+    }
+  };
+  
+  const filteredChallenges = challenges.filter(challenge => {
+    const matchesSearch = challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         challenge.category.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDifficulty = selectedDifficulty.length === 0 || 
+                             selectedDifficulty.includes(challenge.difficulty);
+    return matchesSearch && matchesDifficulty;
+  });
+  
+  const completedCount = challenges.filter(c => c.completed).length;
+  const completionPercentage = Math.round((completedCount / challenges.length) * 100);
 
-  const { data: challenges, isLoading, error } = useChallenges();
-
-  if (error) {
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Failed to load challenges. Please try again later.",
-    });
+  if (!user) {
+    return <Navigate to="/login" />;
   }
 
-  const filteredChallenges = challenges?.filter(challenge => {
-    const matchesSearch = challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         challenge.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesDifficulty = selectedDifficulty === "all" || challenge.difficulty === selectedDifficulty;
-    const matchesLanguage = selectedLanguage === "all" || challenge.programming_language === selectedLanguage;
-    return matchesSearch && matchesDifficulty && matchesLanguage;
-  }) ?? [];
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background transition-colors">
       <Navbar />
       <main className="container mx-auto px-4 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Main Content */}
-          <div className="flex-1 space-y-6">
-            <div className="flex flex-col gap-4">
-              <h1 className="text-4xl font-bold tracking-tight">
-                Practice Coding Challenges
-              </h1>
-              <p className="text-xl text-muted-foreground">
-                Enhance your programming skills with our interactive challenges
-              </p>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search challenges..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col space-y-6"
+        >
+          <div className="flex flex-col space-y-2">
+            <h1 className="text-3xl font-bold text-foreground">Coding Practice</h1>
+            <p className="text-muted-foreground">
+              Sharpen your skills with our collection of coding challenges across different languages and difficulty levels.
+            </p>
+          </div>
+          
+          <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-0">
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold">Your Progress</h3>
+                  <p className="text-muted-foreground">You've completed {completedCount} of {challenges.length} challenges</p>
+                </div>
+                <div className="w-full md:w-1/3">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm">{completedCount} completed</span>
+                    <span className="text-sm font-medium">{completionPercentage}%</span>
+                  </div>
+                  <Progress value={completionPercentage} className="h-2" />
+                </div>
               </div>
-              <Select
-                value={selectedDifficulty}
-                onValueChange={setSelectedDifficulty}
-              >
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Difficulty" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Difficulties</SelectItem>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={selectedLanguage}
-                onValueChange={setSelectedLanguage}
-              >
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Language" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Languages</SelectItem>
-                  <SelectItem value="python">Python</SelectItem>
-                  <SelectItem value="javascript">JavaScript</SelectItem>
-                  <SelectItem value="java">Java</SelectItem>
-                  <SelectItem value="cpp">C++</SelectItem>
-                  <SelectItem value="c">C</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Challenges Grid */}
-            {isLoading ? (
-              <div className="flex items-center justify-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {filteredChallenges.map((challenge) => (
-                  <Card key={challenge.id} className="group hover:shadow-md transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-xl">{challenge.title}</CardTitle>
-                      <Badge className={difficultyColors[challenge.difficulty]}>
-                        {challenge.difficulty}
-                      </Badge>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-muted-foreground">{challenge.description}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            <Code2 className="h-3 w-3" />
-                            {challenge.programming_language.toUpperCase()}
-                          </Badge>
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            <Star className="h-3 w-3" />
-                            {challenge.estimated_time}
-                          </Badge>
+            </CardContent>
+          </Card>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="md:col-span-1 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Filter className="h-5 w-5" />
+                    Filters
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Search</label>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search challenges..."
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Difficulty</label>
+                    <div className="flex flex-wrap gap-2">
+                      {["Easy", "Medium", "Hard"].map((difficulty) => (
+                        <Badge
+                          key={difficulty}
+                          variant={selectedDifficulty.includes(difficulty) ? "default" : "outline"}
+                          className="cursor-pointer"
+                          onClick={() => toggleDifficulty(difficulty)}
+                        >
+                          {difficulty}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart className="h-5 w-5" />
+                    Stats
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { label: "Easy", completed: 2, total: 2, color: "bg-green-500" },
+                      { label: "Medium", completed: 0, total: 2, color: "bg-yellow-500" },
+                      { label: "Hard", completed: 0, total: 2, color: "bg-red-500" },
+                    ].map((stat, index) => (
+                      <div key={index} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span>{stat.label}</span>
+                          <span>{stat.completed}/{stat.total}</span>
                         </div>
-                        <Button className="group-hover:translate-x-1 transition-transform">
-                          Start Challenge
-                          <ChevronRight className="h-4 w-4 ml-2" />
+                        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full ${stat.color}`} 
+                            style={{ width: `${(stat.completed / stat.total) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="md:col-span-3">
+              <Tabs defaultValue="all" className="space-y-6">
+                <TabsList className="bg-muted/50">
+                  <TabsTrigger value="all" className="flex items-center gap-1">
+                    <Code className="h-4 w-4" />
+                    All Challenges
+                  </TabsTrigger>
+                  <TabsTrigger value="recommended" className="flex items-center gap-1">
+                    <Brain className="h-4 w-4" />
+                    Recommended
+                  </TabsTrigger>
+                  <TabsTrigger value="learning" className="flex items-center gap-1">
+                    <BookOpen className="h-4 w-4" />
+                    Learning Paths
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="all">
+                  <motion.div 
+                    variants={container}
+                    initial="hidden"
+                    animate="show"
+                    className="grid grid-cols-1 gap-4"
+                  >
+                    {filteredChallenges.length > 0 ? (
+                      filteredChallenges.map((challenge) => (
+                        <motion.div key={challenge.id} variants={item}>
+                          <Card className="hover:border-primary/50 transition-all">
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                  <CardTitle className="flex items-center gap-2">
+                                    {challenge.title}
+                                    {challenge.completed && (
+                                      <CheckCircle className="h-4 w-4 text-green-500" />
+                                    )}
+                                  </CardTitle>
+                                  <CardDescription>{challenge.category}</CardDescription>
+                                </div>
+                                <Badge
+                                  className={`
+                                    ${challenge.difficulty === 'Easy' ? 'bg-green-500/10 text-green-500' : 
+                                      challenge.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-500' : 
+                                      'bg-red-500/10 text-red-500'}
+                                  `}
+                                >
+                                  {challenge.difficulty}
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardFooter className="flex justify-between pt-2">
+                              <Badge variant="outline">{challenge.language}</Badge>
+                              <Button size="sm" className="gap-1">
+                                Solve <ArrowRight className="h-3 w-3" />
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="text-center py-12">
+                        <p className="text-muted-foreground">No challenges match your filters.</p>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {setSearchTerm(''); setSelectedDifficulty([]);}}
+                          className="mt-4"
+                        >
+                          Clear Filters
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                    )}
+                  </motion.div>
+                </TabsContent>
+                
+                <TabsContent value="recommended">
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">
+                      Based on your previous solutions, we recommend these challenges to help you grow:
+                    </p>
+                    <motion.div 
+                      variants={container}
+                      initial="hidden"
+                      animate="show"
+                      className="grid grid-cols-1 gap-4"
+                    >
+                      {challenges.filter(c => !c.completed).slice(0, 3).map((challenge) => (
+                        <motion.div key={challenge.id} variants={item}>
+                          <Card className="hover:border-primary/50 transition-all">
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                  <CardTitle>{challenge.title}</CardTitle>
+                                  <CardDescription>{challenge.category}</CardDescription>
+                                </div>
+                                <Badge
+                                  className={`
+                                    ${challenge.difficulty === 'Easy' ? 'bg-green-500/10 text-green-500' : 
+                                      challenge.difficulty === 'Medium' ? 'bg-yellow-500/10 text-yellow-500' : 
+                                      'bg-red-500/10 text-red-500'}
+                                  `}
+                                >
+                                  {challenge.difficulty}
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardFooter className="flex justify-between pt-2">
+                              <Badge variant="outline">{challenge.language}</Badge>
+                              <Button size="sm" className="gap-1">
+                                Solve <ArrowRight className="h-3 w-3" />
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="learning">
+                  <div className="space-y-4">
+                    <p className="text-muted-foreground">
+                      Follow these learning paths to master specific programming concepts:
+                    </p>
+                    <motion.div 
+                      variants={container}
+                      initial="hidden"
+                      animate="show"
+                      className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    >
+                      {[
+                        {
+                          title: "Algorithm Mastery",
+                          description: "Learn sorting, searching and graph algorithms",
+                          challenges: 12,
+                          progress: 25,
+                          color: "bg-blue-500"
+                        },
+                        {
+                          title: "Data Structures",
+                          description: "Master arrays, linked lists, trees and graphs",
+                          challenges: 15,
+                          progress: 10,
+                          color: "bg-purple-500"
+                        },
+                        {
+                          title: "Functional Programming",
+                          description: "Learn to code in a functional paradigm",
+                          challenges: 8,
+                          progress: 0,
+                          color: "bg-green-500"
+                        },
+                        {
+                          title: "Dynamic Programming",
+                          description: "Tackle complex problems with DP techniques",
+                          challenges: 10,
+                          progress: 0,
+                          color: "bg-yellow-500"
+                        }
+                      ].map((path, index) => (
+                        <motion.div key={index} variants={item}>
+                          <Card className="hover:border-primary/50 transition-all h-full">
+                            <CardHeader>
+                              <CardTitle>{path.title}</CardTitle>
+                              <CardDescription>{path.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pb-2">
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                  <span>{path.progress}% complete</span>
+                                  <span>{path.challenges} challenges</span>
+                                </div>
+                                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full ${path.color}`} 
+                                    style={{ width: `${path.progress}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </CardContent>
+                            <CardFooter>
+                              <Button variant="outline" className="w-full">View Path</Button>
+                            </CardFooter>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
-
-          {/* Chat Interface */}
-          <div className="lg:w-[400px]">
-            <Card className="sticky top-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Need Help?
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ChatInterface 
-                  courseContext={{
-                    title: "Practice Assistance",
-                    description: "AI-powered programming help",
-                    currentSection: "Practice Challenges"
-                  }}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        </motion.div>
       </main>
     </div>
   );
