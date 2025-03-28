@@ -2,8 +2,27 @@
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const CallToAction = () => {
+  // Use try-catch to handle cases where the component is rendered outside Router context
+  let navigate;
+  try {
+    navigate = useNavigate();
+  } catch (error) {
+    console.error("Router context not available in CallToAction:", error);
+    // Provide fallback values
+    navigate = (path) => { window.location.href = path; };
+  }
+
+  const handleCreateAccount = () => {
+    navigate("/login");
+  };
+  
+  const handleExploreCourses = () => {
+    navigate("/courses");
+  };
+
   return (
     <section className="py-20 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,11 +46,19 @@ const CallToAction = () => {
               Get started today with free access to basic courses.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="group bg-gradient-to-r from-primary to-accent text-white shadow-md hover:shadow-lg transition-all">
+              <Button 
+                size="lg" 
+                className="group bg-gradient-to-r from-primary to-accent text-white shadow-md hover:shadow-lg transition-all"
+                onClick={handleCreateAccount}
+              >
                 Create Free Account
                 <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button size="lg" variant="outline">
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={handleExploreCourses}
+              >
                 Explore Courses
               </Button>
             </div>

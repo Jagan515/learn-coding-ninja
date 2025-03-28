@@ -3,7 +3,16 @@ import { Laptop } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Footer = () => {
-  const navigate = useNavigate();
+  // Use try-catch to handle cases where the component is rendered outside Router context
+  let navigate;
+  try {
+    navigate = useNavigate();
+  } catch (error) {
+    console.error("Router context not available in Footer:", error);
+    // Provide fallback values
+    navigate = (path) => { window.location.href = path; };
+  }
+
   const year = new Date().getFullYear();
 
   return (

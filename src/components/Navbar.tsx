@@ -15,8 +15,19 @@ type NavigationItem = {
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  
+  // Use try-catch to handle cases where the component is rendered outside Router context
+  let navigate;
+  let location;
+  try {
+    navigate = useNavigate();
+    location = useLocation();
+  } catch (error) {
+    console.error("Router context not available:", error);
+    // Provide fallback values
+    navigate = (path) => { window.location.href = path; };
+    location = { pathname: window.location.pathname };
+  }
 
   const publicNavigation: NavigationItem[] = [
     { name: "Home", href: "/" },
