@@ -1,6 +1,6 @@
 
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
-import { AlertCircle, RefreshCcw, XCircle } from "lucide-react";
 
 interface ChatErrorProps {
   error: string;
@@ -10,36 +10,35 @@ interface ChatErrorProps {
 
 const ChatError = ({ error, errorType, onRetry }: ChatErrorProps) => {
   return (
-    <div className="flex items-start gap-3">
-      <div className="flex items-center justify-center h-8 w-8 rounded-full bg-destructive/10 text-destructive shrink-0">
-        {errorType === "quota" ? (
-          <AlertCircle className="h-4 w-4" />
-        ) : (
-          <XCircle className="h-4 w-4" />
-        )}
+    <div className="flex items-start gap-3 animate-slideIn">
+      <div className="flex items-center justify-center h-9 w-9 rounded-full bg-red-100 text-red-600 shrink-0">
+        <AlertCircle className="h-5 w-5" />
       </div>
-      <div className="flex flex-col gap-2 max-w-[80%]">
-        <div className="bg-destructive/10 text-destructive rounded-lg p-3">
-          <p className="text-sm font-medium">
+      
+      <div className="bg-red-50 text-red-700 rounded-2xl p-4 shadow-sm max-w-[85%] border border-red-100">
+        <div className="mb-3">
+          <h4 className="font-medium mb-1">
             {errorType === "quota" 
               ? "Service Temporarily Unavailable" 
-              : "Connection Error"}
-          </p>
-          <p className="text-xs mt-1">
-            {errorType === "quota"
-              ? "Our AI assistant is currently unavailable. The team has been notified and is working to restore service."
-              : "We couldn't connect to our assistant. Please check your connection and try again."}
-          </p>
+              : errorType === "connection"
+                ? "Connection Error"
+                : "Error"
+            }
+          </h4>
+          <p className="text-sm">{error}</p>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-fit" 
-          onClick={onRetry}
-        >
-          <RefreshCcw className="h-3 w-3 mr-2" /> 
-          Try again
-        </Button>
+        
+        {errorType !== "quota" && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onRetry}
+            className="bg-white text-red-600 hover:bg-red-50 border-red-200 flex items-center gap-1"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Retry
+          </Button>
+        )}
       </div>
     </div>
   );

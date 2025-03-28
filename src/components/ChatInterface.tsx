@@ -10,6 +10,7 @@ import ChatError from "./chat/ChatError";
 import ChatLoading from "./chat/ChatLoading";
 import ChatInput from "./chat/ChatInput";
 import { Message, ChatContext } from "./chat/types";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface ChatInterfaceProps {
   courseContext: ChatContext;
@@ -22,6 +23,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
   const [errorType, setErrorType] = useState<"connection" | "quota" | "general">("general");
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [thinking, setThinking] = useState(false);
 
   // Scroll to bottom whenever messages change
   useEffect(() => {
@@ -33,6 +35,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
     setErrorType("general");
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
+    setThinking(true);
 
     try {
       console.log("Sending message to chat function:", userMessage);
@@ -118,6 +121,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
       });
     } finally {
       setIsLoading(false);
+      setThinking(false);
     }
   };
 
@@ -149,26 +153,49 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className="flex flex-col h-[500px] border rounded-lg overflow-hidden bg-white dark:bg-card shadow-sm">
+    <div className="flex flex-col h-[600px] border rounded-lg overflow-hidden bg-gradient-to-b from-white to-slate-50 dark:from-card dark:to-card/90 shadow-md">
       <ChatHeader onClear={clearChat} hasMessages={messages.length > 0} />
 
       <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.length === 0 ? (
-            <ChatEmptyState />
-          ) : (
-            messages.map((message, index) => (
-              <ChatMessage key={index} message={message} />
-            ))
-          )}
+        <div className="space-y-5">
+          <AnimatePresence>
+            {messages.length === 0 ? (
+              <ChatEmptyState />
+            ) : (
+              messages.map((message, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 * index }}
+                >
+                  <ChatMessage message={message} />
+                </motion.div>
+              ))
+            )}
 
-          {/* Error state with retry button */}
-          {error && (
-            <ChatError error={error} errorType={errorType} onRetry={retryLastMessage} />
-          )}
+            {/* Error state with retry button */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <ChatError error={error} errorType={errorType} onRetry={retryLastMessage} />
+              </motion.div>
+            )}
 
-          {/* Loading indicator */}
-          {isLoading && <ChatLoading />}
+            {/* Loading indicator */}
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <ChatLoading />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div ref={messagesEndRef} />
         </div>
@@ -177,7 +204,8 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
       <ChatInput 
         onSubmit={handleSendMessage} 
         isLoading={isLoading} 
-        disabled={errorType === "quota"} 
+        disabled={errorType === "quota" || thinking} 
+        thinking={thinking}
       />
     </div>
   );
