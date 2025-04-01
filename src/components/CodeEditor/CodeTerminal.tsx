@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
 import { java } from "@codemirror/lang-java";
@@ -124,6 +124,8 @@ interface DebugState {
   breakpoints: number[];
   currentLine: number;
   variables: Record<string, any>;
+  callStack: string[];
+  watches: string[];
   memoryStats: {
     heapUsed: number;
     heapTotal: number;
@@ -661,12 +663,15 @@ const CodeTerminal = () => {
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const { toast } = useToast();
+  const editorRef = useRef<any>(null);
   
   const [debugState, setDebugState] = useState<DebugState>({
     isDebugging: false,
     breakpoints: [],
     currentLine: 0,
     variables: {},
+    callStack: [],
+    watches: [],
     memoryStats: {
       heapUsed: 0,
       heapTotal: 0,
@@ -784,15 +789,41 @@ const CodeTerminal = () => {
     
     const startTime = performance.now();
     
+    // Create initial debug variables based on language
+    const initialVariables: Record<string, any> = {};
+    
+    // Create language-specific initial variables for demo
+    switch (language) {
+      case "python":
+        initialVariables.counter = 0;
+        initialVariables.message = "Hello, debugger!";
+        initialVariables.numbers = [1, 2, 3, 4, 5];
+        initialVariables.user = { name: "Developer", role: "Programmer" };
+        break;
+      case "java":
+        initialVariables.counter = 0;
+        initialVariables.message = "Hello, debugger!";
+        initialVariables.numbers = [1, 2, 3, 4, 5];
+        initialVariables.arraySize = 5;
+        break;
+      case "c":
+      case "cpp":
+        initialVariables.i = 0;
+        initialVariables.sum = 0;
+        initialVariables.array = [1, 2, 3, 4, 5];
+        initialVariables["*ptr"] = "0x7ffd3c7e4d60";
+        break;
+    }
+    
+    // Create mock call stack based on language
+    const callStack = createMockCallStack(language);
+    
     setDebugState(prev => ({
       ...prev,
       isDebugging: true,
       currentLine: 1,
-      variables: { 
-        "counter": 0,
-        "message": "Hello, debugger!",
-        "array": [1, 2, 3]
-      },
+      variables: initialVariables,
+      callStack: callStack,
       memoryStats: {
         heapUsed: 50 * 1024 * 1024, // 50MB
         heapTotal: 100 * 1024 * 1024, // 100MB
@@ -801,28 +832,64 @@ const CodeTerminal = () => {
       }
     }));
     
-    setOutput("[Debugger] Starting debug session...\n[Debugger] Loaded variables for inspection\n[Debugger] Ready to step through code");
+    setOutput("[GDB] Starting debug session...\n[GDB] Loaded symbols\n[GDB] Breakpoints can be set by clicking line numbers or using the breakpoint tab\n[GDB] Ready to step through code");
     
     toast({
       title: "Debug Mode Activated",
-      description: "Use the step controls to navigate through your code.",
+      description: "GDB-like debugging environment initialized.",
     });
+  };
+
+  const createMockCallStack = (language: ProgrammingLanguage): string[] => {
+    switch (language) {
+      case "python":
+        return ["<module>", "main()", "process_data()"];
+      case "java":
+        return ["Main.main(String[])", "Main.processData(int[])"];
+      case "c":
+      case "cpp":
+        return ["main()", "process_data(int*, int)"];
+      default:
+        return ["main()"];
+    }
   };
 
   const handleStepOver = () => {
     const startTime = performance.now();
     const lineCount = code.split('\n').length;
     
-    // Simulate stepping to the next line, wrapping around if we reach the end
-    const nextLine = (debugState.currentLine + 1) % lineCount || 1;
+    // Simulate stepping to the next line
+    let nextLine = debugState.currentLine + 1;
+    
+    // If we've hit a breakpoint, notify
+    if (debugState.breakpoints.includes(nextLine)) {
+      toast({
+        title: "Breakpoint Hit",
+        description: `Execution paused at breakpoint on line ${nextLine}`,
+      });
+    }
+    
+    // Wrap around if we reach the end
+    if (nextLine > lineCount) nextLine = 1;
+    
+    // Update variables based on line number for demo
+    const updatedVariables = { ...debugState.variables };
+    
+    // Simple simulation of variable changes
+    if ("counter" in updatedVariables) {
+      updatedVariables.counter += 1;
+    }
+    if ("i" in updatedVariables) {
+      updatedVariables.i += 1;
+      if ("sum" in updatedVariables) {
+        updatedVariables.sum += updatedVariables.i;
+      }
+    }
     
     setDebugState(prev => ({
       ...prev,
       currentLine: nextLine,
-      variables: {
-        ...prev.variables,
-        counter: prev.variables.counter + 1
-      },
+      variables: updatedVariables,
       memoryStats: {
         ...prev.memoryStats,
         heapUsed: prev.memoryStats.heapUsed + 1024 * 1024, // Simulate 1MB increase
@@ -832,7 +899,96 @@ const CodeTerminal = () => {
     }));
     
     // Update output with step information
-    setOutput(prev => prev + `\n[Debugger] Stepped to line ${nextLine}`);
+    setOutput(prev => prev + `\n[GDB] Stepped to line ${nextLine}` + 
+      (debugState.breakpoints.includes(nextLine) ? " (breakpoint hit)" : ""));
+  };
+  
+  const handleStepInto = () => {
+    // Simulate stepping into a function
+    const callStack = [...debugState.callStack];
+    
+    if (callStack.length < 5) {
+      // Add a new function to the call stack
+      const functions = {
+        python: ["process_item()", "calculate_result()", "handle_data()"],
+        java: ["processItem()", "calculateResult()", "handleData()"],
+        c: ["process_item()", "calculate_result()", "handle_data()"]
+      };
+      
+      const newFunction = functions[language as keyof typeof functions]?.[Math.floor(Math.random() * 3)] || "unknown_function()";
+      callStack.unshift(newFunction);
+      
+      setOutput(prev => prev + `\n[GDB] Stepping into ${newFunction}`);
+    } else {
+      setOutput(prev => prev + `\n[GDB] Call stack too deep, use 'step out' first`);
+    }
+    
+    setDebugState(prev => ({
+      ...prev,
+      callStack: callStack,
+      memoryStats: {
+        ...prev.memoryStats,
+        heapUsed: prev.memoryStats.heapUsed + 2 * 1024 * 1024, // Stepping into uses more memory
+      }
+    }));
+  };
+  
+  const handleStepOut = () => {
+    // Simulate stepping out of a function
+    const callStack = [...debugState.callStack];
+    
+    if (callStack.length > 1) {
+      // Remove the top function from the call stack
+      const removedFunction = callStack.shift();
+      setOutput(prev => prev + `\n[GDB] Stepping out of ${removedFunction}`);
+    } else {
+      setOutput(prev => prev + `\n[GDB] Already at top level`);
+    }
+    
+    setDebugState(prev => ({
+      ...prev,
+      callStack: callStack,
+    }));
+  };
+
+  const handleAddBreakpoint = (line: number) => {
+    if (!debugState.breakpoints.includes(line)) {
+      setDebugState(prev => ({
+        ...prev,
+        breakpoints: [...prev.breakpoints, line].sort((a, b) => a - b)
+      }));
+      
+      setOutput(prev => prev + `\n[GDB] Breakpoint set at line ${line}`);
+    }
+  };
+  
+  const handleRemoveBreakpoint = (line: number) => {
+    setDebugState(prev => ({
+      ...prev,
+      breakpoints: prev.breakpoints.filter(bp => bp !== line)
+    }));
+    
+    setOutput(prev => prev + `\n[GDB] Breakpoint at line ${line} removed`);
+  };
+  
+  const handleWatchVariable = (variableName: string) => {
+    setDebugState(prev => ({
+      ...prev,
+      watches: [...prev.watches, variableName]
+    }));
+    
+    setOutput(prev => prev + `\n[GDB] Watching variable '${variableName}'`);
+    
+    // For demo, add the variable to the variables list if it doesn't exist
+    if (!(variableName in debugState.variables)) {
+      setDebugState(prev => ({
+        ...prev,
+        variables: {
+          ...prev.variables,
+          [variableName]: "undefined"
+        }
+      }));
+    }
   };
 
   const handleStopDebug = () => {
@@ -841,7 +997,7 @@ const CodeTerminal = () => {
       isDebugging: false,
     }));
     
-    setOutput(prev => prev + "\n[Debugger] Debugging session stopped");
+    setOutput(prev => prev + "\n[GDB] Debugging session stopped");
     
     toast({
       title: "Debug Mode Deactivated",
@@ -855,6 +1011,7 @@ const CodeTerminal = () => {
       ...prev,
       currentLine: 0,
       variables: {},
+      callStack: [],
       memoryStats: {
         heapUsed: 0,
         heapTotal: 0,
@@ -935,6 +1092,8 @@ const CodeTerminal = () => {
         onRun={handleRun}
         onDebug={handleDebug}
         onStepOver={handleStepOver}
+        onStepInto={handleStepInto}
+        onStepOut={handleStepOut}
         onStopDebug={handleStopDebug}
         onClear={handleClear}
         isRunning={isRunning}
@@ -947,6 +1106,7 @@ const CodeTerminal = () => {
           <OutputTerminal 
             output={output} 
             isDarkTheme={isDarkTheme} 
+            callStack={debugState.isDebugging ? debugState.callStack : []}
           />
         </div>
         
@@ -955,6 +1115,11 @@ const CodeTerminal = () => {
             <DebugPanel 
               variables={debugState.variables} 
               isDarkTheme={isDarkTheme} 
+              breakpoints={debugState.breakpoints}
+              currentLine={debugState.currentLine}
+              onAddBreakpoint={handleAddBreakpoint}
+              onRemoveBreakpoint={handleRemoveBreakpoint}
+              onWatchVariable={handleWatchVariable}
             />
           )}
           

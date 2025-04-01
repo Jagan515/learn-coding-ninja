@@ -1,12 +1,15 @@
 
 import { Button } from "../ui/button";
-import { Play, Bug, StepForward, Pause, Trash2 } from "lucide-react";
+import { Play, Bug, StepForward, StepInto, StepOut, Pause, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface ControlPanelProps {
   onRun: () => void;
   onDebug: () => void;
   onStepOver: () => void;
+  onStepInto: () => void;
+  onStepOut: () => void;
   onStopDebug: () => void;
   onClear: () => void;
   isRunning: boolean;
@@ -18,6 +21,8 @@ const ControlPanel = ({
   onRun,
   onDebug,
   onStepOver,
+  onStepInto,
+  onStepOut,
   onStopDebug,
   onClear,
   isRunning,
@@ -25,60 +30,120 @@ const ControlPanel = ({
   hasOutput,
 }: ControlPanelProps) => {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          onClick={onRun}
-          disabled={isRunning || isDebugging}
-          className={cn(
-            "transition-all",
-            isRunning && "animate-pulse bg-primary/90"
+    <TooltipProvider>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                onClick={onRun}
+                disabled={isRunning || isDebugging}
+                className={cn(
+                  "transition-all",
+                  isRunning && "animate-pulse bg-primary/90"
+                )}
+              >
+                <Play className="h-4 w-4 mr-2" />
+                {isRunning ? "Running..." : "Run"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Execute code without debugging</TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant={isDebugging ? "secondary" : "outline"}
+                onClick={onDebug}
+                disabled={isRunning || isDebugging}
+                className={isDebugging ? "bg-amber-600 hover:bg-amber-700 text-white" : ""}
+              >
+                <Bug className="h-4 w-4 mr-2" />
+                Debug
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Start GDB-like debugging session</TooltipContent>
+          </Tooltip>
+          
+          {isDebugging && (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onStepOver}
+                  >
+                    <StepForward className="h-4 w-4 mr-2" />
+                    Step Over
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Execute current line and move to next line</TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onStepInto}
+                  >
+                    <StepInto className="h-4 w-4 mr-2" />
+                    Step Into
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Step into function call on current line</TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={onStepOut}
+                  >
+                    <StepOut className="h-4 w-4 mr-2" />
+                    Step Out
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Step out of current function</TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={onStopDebug}
+                  >
+                    <Pause className="h-4 w-4 mr-2" />
+                    Stop
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>End debugging session</TooltipContent>
+              </Tooltip>
+            </>
           )}
-        >
-          <Play className="h-4 w-4 mr-2" />
-          {isRunning ? "Running..." : "Run"}
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={onDebug}
-          disabled={isRunning || isDebugging}
-        >
-          <Bug className="h-4 w-4 mr-2" />
-          Debug
-        </Button>
-        {isDebugging && (
-          <>
+        </div>
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
             <Button
-              size="sm"
               variant="outline"
-              onClick={onStepOver}
-            >
-              <StepForward className="h-4 w-4 mr-2" />
-              Step Over
-            </Button>
-            <Button
               size="sm"
-              variant="outline"
-              onClick={onStopDebug}
+              onClick={onClear}
+              disabled={!hasOutput || isRunning}
             >
-              <Pause className="h-4 w-4 mr-2" />
-              Stop
+              <Trash2 className="h-4 w-4 mr-2" />
+              Clear
             </Button>
-          </>
-        )}
+          </TooltipTrigger>
+          <TooltipContent>Clear terminal output</TooltipContent>
+        </Tooltip>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onClear}
-        disabled={!hasOutput || isRunning}
-      >
-        <Trash2 className="h-4 w-4 mr-2" />
-        Clear
-      </Button>
-    </div>
+    </TooltipProvider>
   );
 };
 
