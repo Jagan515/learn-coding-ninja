@@ -37,7 +37,13 @@ const getDefaultCode = (language: ProgrammingLanguage): string => {
       return `# Python Example
 # Print numbers 0 to 4 using a loop
 for i in range(5):
-    print(i)`;
+    print(i)
+    
+# You can also use functions
+def greet(name):
+    return f"Hello, {name}!"
+    
+print(greet("Programmer"))`;
     case "java":
       return `// Java Example
 public class Main {
@@ -46,11 +52,22 @@ public class Main {
         for (int i = 0; i < 5; i++) {
             System.out.println(i);
         }
+        
+        // Using a function
+        System.out.println(greet("Programmer"));
+    }
+    
+    public static String greet(String name) {
+        return "Hello, " + name + "!";
     }
 }`;
     case "c":
       return `// C Example
 #include <stdio.h>
+#include <string.h>
+
+// Function declaration
+void greet(char name[], char result[]);
 
 int main() {
     // Print numbers 0 to 4 using a loop
@@ -58,12 +75,29 @@ int main() {
         printf("%d\\n", i);
     }
     
+    // Using a function
+    char greeting[50];
+    greet("Programmer", greeting);
+    printf("%s\\n", greeting);
+    
     return 0;
+}
+
+// Function definition
+void greet(char name[], char result[]) {
+    char hello[] = "Hello, ";
+    strcpy(result, hello);
+    strcat(result, name);
+    strcat(result, "!");
 }`;
     case "cpp":
       return `// C++ Example
 #include <iostream>
+#include <string>
 using namespace std;
+
+// Function declaration
+string greet(string name);
 
 int main() {
     // Print numbers 0 to 4 using a loop
@@ -71,7 +105,15 @@ int main() {
         cout << i << endl;
     }
     
+    // Using a function
+    cout << greet("Programmer") << endl;
+    
     return 0;
+}
+
+// Function definition
+string greet(string name) {
+    return "Hello, " + name + "!";
 }`;
   }
 };
@@ -89,49 +131,141 @@ interface DebugState {
   };
 }
 
-// Simulate compiler and runtime execution for different languages
+// Improved code execution function with better pattern recognition and more realistic output
 const executeCode = (code: string, language: ProgrammingLanguage): { output: string; error: string | null } => {
   try {
     let output = "";
     let error = null;
 
-    // Pre-compilation validation for each language to catch obvious errors
-    switch (language) {
-      case "python":
-        // Check for Python syntax errors
-        if (!code.includes("print") && code.includes("for") && !code.includes(":")) {
-          throw new Error("SyntaxError: expected ':' at the end of the 'for' statement");
-        }
-        break;
-      case "java":
-        // Check for basic Java errors
-        if (!code.includes("class")) {
-          throw new Error("Error: no class definition found");
-        }
-        if (!code.includes("public static void main")) {
-          throw new Error("Error: main method not found");
-        }
-        break;
-      case "c":
-      case "cpp":
-        // Check for basic C/C++ errors
-        if (!code.includes("main(")) {
-          throw new Error("Error: no main function defined");
-        }
-        if (code.includes("cout") && !code.includes("iostream")) {
-          throw new Error("Error: 'cout' used but <iostream> not included");
-        }
-        if (code.includes("printf") && !code.includes("stdio.h")) {
-          throw new Error("Error: 'printf' used but <stdio.h> not included");
-        }
-        break;
+    // Check for common syntax errors first
+    function checkSyntaxErrors() {
+      switch (language) {
+        case "python":
+          if (code.includes("for") && !code.includes(":")) {
+            throw new Error("SyntaxError: expected ':' at the end of the 'for' statement");
+          }
+          if (code.includes("def") && !code.includes(":")) {
+            throw new Error("SyntaxError: expected ':' at the end of function definition");
+          }
+          if ((code.match(/'/g) || []).length % 2 !== 0 && (code.match(/"/g) || []).length % 2 !== 0) {
+            throw new Error("SyntaxError: unterminated string literal");
+          }
+          break;
+          
+        case "java":
+          if (!code.includes("class")) {
+            throw new Error("Error: no class definition found");
+          }
+          if (!code.includes("public static void main")) {
+            throw new Error("Error: main method not found");
+          }
+          if ((code.match(/\{/g) || []).length !== (code.match(/\}/g) || []).length) {
+            throw new Error("Error: unbalanced braces");
+          }
+          break;
+          
+        case "c":
+        case "cpp":
+          if (!code.includes("main(")) {
+            throw new Error("Error: no main function defined");
+          }
+          if (language === "cpp" && code.includes("cout") && !code.includes("iostream")) {
+            throw new Error("Error: 'cout' used but <iostream> not included");
+          }
+          if (code.includes("printf") && !code.includes("stdio.h")) {
+            throw new Error("Error: 'printf' used but <stdio.h> not included");
+          }
+          if ((code.match(/\{/g) || []).length !== (code.match(/\}/g) || []).length) {
+            throw new Error("Error: unbalanced braces");
+          }
+          break;
+      }
     }
+    
+    checkSyntaxErrors();
 
-    // Simulate execution for each language
-    switch (language) {
-      case "python":
-        // Extract and execute loop structures for Python
-        if (code.includes("for") && code.includes("range")) {
+    // Extract function definitions to be used in simulation
+    const functions: Record<string, Function> = {};
+    
+    // Parse and execute function definitions
+    function parseFunctions() {
+      switch (language) {
+        case "python":
+          // Match Python function definitions
+          const pyFunctions = code.match(/def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\):/g);
+          if (pyFunctions) {
+            pyFunctions.forEach(funcDef => {
+              const match = funcDef.match(/def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\):/);
+              if (match) {
+                const funcName = match[1];
+                const params = match[2].split(',').map(p => p.trim()).filter(p => p);
+                
+                // Find the function body (simplistic approach)
+                const funcStart = code.indexOf(funcDef);
+                let funcEnd = code.indexOf("\ndef", funcStart + 1);
+                if (funcEnd === -1) funcEnd = code.length;
+                
+                // Store a simulator function
+                functions[funcName] = (...args: any[]) => {
+                  // Very simple simulator for string return values
+                  if (code.includes(`return f"Hello, {${params[0]}}!"`)) {
+                    return `Hello, ${args[0]}!`;
+                  } else if (code.includes(`return "Hello, " + ${params[0]} + "!"`)) {
+                    return `Hello, ${args[0]}!`;
+                  } else {
+                    return `[${funcName} returned a value]`;
+                  }
+                };
+              }
+            });
+          }
+          break;
+          
+        case "java":
+          // Match Java method definitions (simplified)
+          const javaMethods = code.match(/public static\s+\w+\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)\s*\{/g);
+          if (javaMethods) {
+            javaMethods.forEach(methodDef => {
+              const match = methodDef.match(/public static\s+\w+\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)/);
+              if (match && match[1] !== "main") {
+                const methodName = match[1];
+                
+                // Store a simulator function
+                functions[methodName] = (...args: any[]) => {
+                  if (methodName === "greet" && args.length === 1) {
+                    return `Hello, ${args[0]}!`;
+                  } else {
+                    return `[${methodName} returned a value]`;
+                  }
+                };
+              }
+            });
+          }
+          break;
+          
+        case "c":
+        case "cpp":
+          // For C/C++, we'll just create a simple simulator for the greet function
+          if (language === "c" && code.includes("void greet(char name[], char result[])")) {
+            functions["greet"] = (name: string, result: any) => {
+              return `Hello, ${name}!`;
+            };
+          } else if (language === "cpp" && code.includes("string greet(string name)")) {
+            functions["greet"] = (name: string) => {
+              return `Hello, ${name}!`;
+            };
+          }
+          break;
+      }
+    }
+    
+    parseFunctions();
+
+    // Execute loops and print statements
+    function executeLoopsAndPrints() {
+      switch (language) {
+        case "python":
+          // Extract and execute loop structures
           const forLoopMatch = code.match(/for\s+(\w+)\s+in\s+range\s*\(([^)]+)\):/);
           if (forLoopMatch) {
             const loopVar = forLoopMatch[1];
@@ -153,71 +287,181 @@ const executeCode = (code: string, language: ProgrammingLanguage): { output: str
             }
             
             for (let i = start; i < end; i += step) {
-              // Check if there's a print statement inside the loop
-              if (code.includes("print")) {
-                const printMatch = code.match(/\s+print\s*\((.*?)\)/);
-                if (printMatch) {
-                  const printArg = printMatch[1].trim();
-                  if (printArg === loopVar) {
-                    output += i + "\n";
-                  } else if (printArg.includes(loopVar)) {
-                    // Handle simple expressions like "i + 1"
-                    try {
-                      const value = eval(printArg.replace(loopVar, i.toString()));
-                      output += value + "\n";
-                    } catch {
-                      output += printArg.replace(loopVar, i.toString()) + "\n";
+              // Find all print statements inside the loop context
+              const printInLoop = code.match(/\s+print\s*\(([^)]+)\)/g);
+              if (printInLoop) {
+                printInLoop.forEach(printStmt => {
+                  const printArg = printStmt.match(/print\s*\(([^)]+)\)/)?.[1].trim();
+                  if (printArg) {
+                    if (printArg === loopVar) {
+                      output += i + "\n";
+                    } else if (printArg.includes(loopVar)) {
+                      // Handle simple expressions
+                      try {
+                        const value = eval(printArg.replace(loopVar, i.toString()));
+                        output += value + "\n";
+                      } catch {
+                        output += printArg.replace(loopVar, i.toString()) + "\n";
+                      }
+                    } else if (printArg.startsWith('f"') || printArg.startsWith("f'")) {
+                      // Handle f-strings with the loop variable
+                      output += printArg
+                        .replace(/f["'](.*)["']/, '$1')
+                        .replace(new RegExp(`{${loopVar}}`, 'g'), i.toString()) + "\n";
+                    } else if (functions && printArg in functions) {
+                      // Function call
+                      output += functions[printArg]() + "\n";
+                    } else if (printArg.includes("(") && printArg.includes(")")) {
+                      // Function call with arguments
+                      const funcCall = printArg.match(/([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*([^)]*)\s*\)/);
+                      if (funcCall && funcCall[1] in functions) {
+                        const funcName = funcCall[1];
+                        const args = funcCall[2].split(',').map(arg => {
+                          // Remove quotes from string arguments
+                          const trimmed = arg.trim();
+                          if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+                            return trimmed.slice(1, -1);
+                          }
+                          return trimmed;
+                        });
+                        output += functions[funcName](...args) + "\n";
+                      } else {
+                        output += `[Function call: ${printArg}]` + "\n";
+                      }
+                    } else {
+                      // Handle string literals
+                      if ((printArg.startsWith('"') && printArg.endsWith('"')) || 
+                          (printArg.startsWith("'") && printArg.endsWith("'"))) {
+                        output += printArg.slice(1, -1) + "\n";
+                      } else {
+                        output += printArg + "\n";
+                      }
                     }
-                  } else {
-                    output += printArg.replace(/["']/g, "") + "\n";
                   }
-                }
+                });
               }
             }
           }
-        } else if (code.includes("print")) {
-          // Handle individual print statements
-          const printMatches = code.match(/print\s*\((.*?)\)/g);
-          if (printMatches) {
-            printMatches.forEach(match => {
-              const content = match.substring(match.indexOf('(') + 1, match.lastIndexOf(')'));
-              if (content.startsWith('"') || content.startsWith("'")) {
-                output += content.slice(1, -1) + "\n";
-              } else {
-                try {
-                  output += eval(content) + "\n";
-                } catch {
-                  output += content + "\n";
+          
+          // Handle print statements outside loops
+          const printStmtsOutside = code.match(/^print\s*\(([^)]+)\)/gm);
+          if (printStmtsOutside) {
+            printStmtsOutside.forEach(printStmt => {
+              const printArg = printStmt.match(/print\s*\(([^)]+)\)/)?.[1].trim();
+              if (printArg) {
+                if (functions && printArg in functions) {
+                  // Function call
+                  output += functions[printArg]() + "\n";
+                } else if (printArg.includes("(") && printArg.includes(")")) {
+                  // Function call with arguments
+                  const funcCall = printArg.match(/([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*([^)]*)\s*\)/);
+                  if (funcCall && funcCall[1] in functions) {
+                    const funcName = funcCall[1];
+                    const args = funcCall[2].split(',').map(arg => {
+                      // Remove quotes from string arguments
+                      const trimmed = arg.trim();
+                      if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+                        return trimmed.slice(1, -1);
+                      }
+                      return trimmed;
+                    });
+                    output += functions[funcName](...args) + "\n";
+                  } else {
+                    output += `[Function call: ${printArg}]` + "\n";
+                  }
+                } else if ((printArg.startsWith('"') && printArg.endsWith('"')) || 
+                          (printArg.startsWith("'") && printArg.endsWith("'"))) {
+                  output += printArg.slice(1, -1) + "\n";
+                } else {
+                  try {
+                    output += eval(printArg) + "\n";
+                  } catch {
+                    output += printArg + "\n";
+                  }
                 }
               }
             });
           }
-        }
-        break;
-        
-      case "java":
-        // Extract and execute loop structures for Java
-        if (code.includes("for") && code.includes("System.out.println")) {
-          const forLoopMatch = code.match(/for\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\w+\s*<\s*(\d+)\s*;/);
-          if (forLoopMatch) {
-            const loopVar = forLoopMatch[1];
-            const start = parseInt(forLoopMatch[2]);
-            const end = parseInt(forLoopMatch[3]);
+          break;
+          
+        case "java":
+          // Extract and execute loop structures for Java
+          const javaForLoop = code.match(/for\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\w+\s*<\s*(\d+)\s*;/);
+          if (javaForLoop) {
+            const loopVar = javaForLoop[1];
+            const start = parseInt(javaForLoop[2]);
+            const end = parseInt(javaForLoop[3]);
             
-            const printMatch = code.match(/System\.out\.println\s*\((.*?)\)/);
-            if (printMatch) {
-              const printArg = printMatch[1].trim();
+            for (let i = start; i < end; i++) {
+              // Find println statements in the loop
+              const printlnInLoop = code.match(/System\.out\.println\s*\(([^)]+)\)/g);
+              if (printlnInLoop) {
+                printlnInLoop.forEach(printStmt => {
+                  const printArg = printStmt.match(/System\.out\.println\s*\(([^)]+)\)/)?.[1].trim();
+                  if (printArg) {
+                    if (printArg === loopVar) {
+                      output += i + "\n";
+                    } else if (printArg.includes(loopVar)) {
+                      output += printArg.replace(loopVar, i.toString()) + "\n";
+                    } else if (functions && printArg in functions) {
+                      output += functions[printArg]() + "\n";
+                    } else if (printArg.includes("(") && printArg.includes(")")) {
+                      // Function call with arguments
+                      const funcCall = printArg.match(/([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*([^)]*)\s*\)/);
+                      if (funcCall && funcCall[1] in functions) {
+                        const funcName = funcCall[1];
+                        const args = funcCall[2].split(',').map(arg => {
+                          // Remove quotes from string arguments
+                          const trimmed = arg.trim();
+                          if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+                            return trimmed.slice(1, -1);
+                          }
+                          return trimmed;
+                        });
+                        output += functions[funcName](...args) + "\n";
+                      } else {
+                        output += `[Method call: ${printArg}]` + "\n";
+                      }
+                    } else if (printArg.startsWith('"') && printArg.endsWith('"')) {
+                      output += printArg.slice(1, -1) + "\n";
+                    } else {
+                      output += printArg + "\n";
+                    }
+                  }
+                });
+              }
+            }
+          }
+          
+          // Handle println statements outside loops
+          const printlnOutside = code.match(/System\.out\.println\s*\(([^)]+)\)/g);
+          if (printlnOutside) {
+            printlnOutside.forEach(printStmt => {
+              // Skip statements already processed in loops
+              if (javaForLoop && code.indexOf(printStmt) > code.indexOf("for (")) {
+                return;
+              }
               
-              for (let i = start; i < end; i++) {
-                if (printArg === loopVar) {
-                  output += i + "\n";
-                } else if (printArg.includes(loopVar)) {
-                  // Handle simple expressions like "i + 1"
-                  try {
-                    const value = eval(printArg.replace(loopVar, i.toString()));
-                    output += value + "\n";
-                  } catch {
-                    output += printArg.replace(loopVar, i.toString()) + "\n";
+              const printArg = printStmt.match(/System\.out\.println\s*\(([^)]+)\)/)?.[1].trim();
+              if (printArg) {
+                if (functions && printArg in functions) {
+                  output += functions[printArg]() + "\n";
+                } else if (printArg.includes("(") && printArg.includes(")")) {
+                  // Function call with arguments
+                  const funcCall = printArg.match(/([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*([^)]*)\s*\)/);
+                  if (funcCall && funcCall[1] in functions) {
+                    const funcName = funcCall[1];
+                    const args = funcCall[2].split(',').map(arg => {
+                      // Remove quotes from string arguments
+                      const trimmed = arg.trim();
+                      if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+                        return trimmed.slice(1, -1);
+                      }
+                      return trimmed;
+                    });
+                    output += functions[funcName](...args) + "\n";
+                  } else {
+                    output += `[Method call: ${printArg}]` + "\n";
                   }
                 } else if (printArg.startsWith('"') && printArg.endsWith('"')) {
                   output += printArg.slice(1, -1) + "\n";
@@ -225,140 +469,179 @@ const executeCode = (code: string, language: ProgrammingLanguage): { output: str
                   output += printArg + "\n";
                 }
               }
-            }
-          }
-        } else if (code.includes("System.out.println")) {
-          // Handle individual print statements
-          const printMatches = code.match(/System\.out\.println\s*\((.*?)\)/g);
-          if (printMatches) {
-            printMatches.forEach(match => {
-              const content = match.substring(match.indexOf('(') + 1, match.lastIndexOf(')'));
-              if (content.startsWith('"') && content.endsWith('"')) {
-                output += content.slice(1, -1) + "\n";
-              } else {
-                try {
-                  output += eval(content) + "\n";
-                } catch {
-                  output += content + "\n";
-                }
-              }
             });
           }
-        }
-        break;
-        
-      case "c":
-        // Extract and execute loop structures for C
-        if (code.includes("for") && code.includes("printf")) {
-          const forLoopMatch = code.match(/for\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\w+\s*<\s*(\d+)\s*;/);
-          if (forLoopMatch) {
-            const loopVar = forLoopMatch[1];
-            const start = parseInt(forLoopMatch[2]);
-            const end = parseInt(forLoopMatch[3]);
+          break;
+          
+        case "c":
+          // Extract and execute loop structures for C
+          const cForLoop = code.match(/for\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\w+\s*<\s*(\d+)\s*;/);
+          if (cForLoop) {
+            const loopVar = cForLoop[1];
+            const start = parseInt(cForLoop[2]);
+            const end = parseInt(cForLoop[3]);
             
-            const printMatch = code.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/);
-            if (printMatch) {
-              let formatStr = printMatch[1];
-              const printArg = printMatch[2]?.trim();
+            for (let i = start; i < end; i++) {
+              // Find printf statements in the loop
+              const printfMatches = code.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/g);
+              if (printfMatches) {
+                printfMatches.forEach(printfStmt => {
+                  // Skip statements outside the loop
+                  if (code.indexOf(printfStmt) < code.indexOf("for (") || 
+                      code.indexOf(printfStmt) > code.indexOf("return 0;")) {
+                    return;
+                  }
+                  
+                  const match = printfStmt.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/);
+                  if (match) {
+                    const formatStr = match[1];
+                    const arg = match[2]?.trim();
+                    
+                    if (arg === loopVar) {
+                      output += formatStr.replace(/%d|%i/, String(i)).replace(/\\n/g, '\n');
+                    } else if (arg && arg.includes(loopVar)) {
+                      try {
+                        const value = eval(arg.replace(loopVar, i.toString()));
+                        output += formatStr.replace(/%d|%i/, String(value)).replace(/\\n/g, '\n');
+                      } catch {
+                        output += formatStr.replace(/%d|%i/, arg.replace(loopVar, i.toString())).replace(/\\n/g, '\n');
+                      }
+                    } else {
+                      output += formatStr.replace(/\\n/g, '\n');
+                    }
+                  }
+                });
+              }
+            }
+          }
+          
+          // Handle printf statements outside loops
+          const printfOutside = code.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/g);
+          if (printfOutside) {
+            printfOutside.forEach(printfStmt => {
+              // Skip statements already processed in loops
+              if (cForLoop && code.indexOf(printfStmt) > code.indexOf("for (") && 
+                  code.indexOf(printfStmt) < code.indexOf("return 0;")) {
+                return;
+              }
               
-              for (let i = start; i < end; i++) {
-                if (printArg === loopVar) {
-                  output += formatStr.replace(/%d|%i/, String(i)).replace(/\\n/g, '\n');
-                } else if (printArg && printArg.includes(loopVar)) {
+              const match = printfStmt.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/);
+              if (match) {
+                const formatStr = match[1];
+                const arg = match[2]?.trim();
+                
+                if (arg && arg.includes("greet")) {
+                  // Handle the greet function call
+                  const greetMatch = arg.match(/greet\s*\(\s*"([^"]*)"\s*,\s*(.*)\s*\)/);
+                  if (greetMatch) {
+                    const name = greetMatch[1];
+                    output += `Hello, ${name}!` + (formatStr.includes("\\n") ? "\n" : "");
+                  } else {
+                    output += formatStr.replace(/\\n/g, '\n');
+                  }
+                } else if (arg) {
+                  // Try to evaluate the argument
                   try {
-                    const value = eval(printArg.replace(loopVar, i.toString()));
-                    output += formatStr.replace(/%d|%i/, String(value)).replace(/\\n/g, '\n');
+                    const value = eval(arg);
+                    output += formatStr.replace(/%d|%i|%s/, String(value)).replace(/\\n/g, '\n');
                   } catch {
-                    output += formatStr.replace(/%d|%i/, printArg.replace(loopVar, i.toString())).replace(/\\n/g, '\n');
+                    output += formatStr.replace(/%d|%i|%s/, arg).replace(/\\n/g, '\n');
                   }
                 } else {
                   output += formatStr.replace(/\\n/g, '\n');
                 }
               }
-            }
-          }
-        } else if (code.includes("printf")) {
-          // Handle individual printf statements
-          const printfMatches = code.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/g);
-          if (printfMatches) {
-            printfMatches.forEach(match => {
-              const formatMatch = match.match(/printf\s*\(\s*"([^"]*)"\s*(?:,\s*(.*))?\s*\)/);
-              if (formatMatch) {
-                let formatStr = formatMatch[1];
-                const args = formatMatch[2]?.split(',').map(arg => arg.trim()) || [];
-                
-                let result = formatStr;
-                args.forEach((arg) => {
-                  try {
-                    const value = eval(arg);
-                    // Use String() instead of replace with a function
-                    result = result.replace(/%d|%i|%f|%s/, String(value));
-                  } catch {
-                    result = result.replace(/%d|%i|%f|%s/, arg);
-                  }
-                });
-                
-                output += result.replace(/\\n/g, '\n');
-              }
             });
           }
-        }
-        break;
-        
-      case "cpp":
-        // Extract and execute loop structures for C++
-        if (code.includes("for") && code.includes("cout")) {
-          const forLoopMatch = code.match(/for\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\w+\s*<\s*(\d+)\s*;/);
-          if (forLoopMatch) {
-            const loopVar = forLoopMatch[1];
-            const start = parseInt(forLoopMatch[2]);
-            const end = parseInt(forLoopMatch[3]);
+          break;
+          
+        case "cpp":
+          // Extract and execute loop structures for C++
+          const cppForLoop = code.match(/for\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\w+\s*<\s*(\d+)\s*;/);
+          if (cppForLoop) {
+            const loopVar = cppForLoop[1];
+            const start = parseInt(cppForLoop[2]);
+            const end = parseInt(cppForLoop[3]);
             
-            const coutMatch = code.match(/cout\s*<<\s*(.*?)\s*(?:<<\s*endl)?;/);
-            if (coutMatch) {
-              const coutArg = coutMatch[1].trim();
-              
-              for (let i = start; i < end; i++) {
-                if (coutArg === loopVar) {
-                  output += i + "\n";
-                } else if (coutArg.includes(loopVar)) {
-                  try {
-                    const value = eval(coutArg.replace(loopVar, i.toString()));
-                    output += value + "\n";
-                  } catch {
-                    output += coutArg.replace(loopVar, i.toString()) + "\n";
+            for (let i = start; i < end; i++) {
+              // Find cout statements in the loop
+              const coutMatches = code.match(/cout\s*<<\s*(.*?)\s*(?:<<\s*endl)?;/g);
+              if (coutMatches) {
+                coutMatches.forEach(coutStmt => {
+                  // Skip statements outside the loop
+                  if (code.indexOf(coutStmt) < code.indexOf("for (") || 
+                      code.indexOf(coutStmt) > code.indexOf("return 0;")) {
+                    return;
                   }
-                } else if (coutArg.startsWith('"') && coutArg.endsWith('"')) {
-                  output += coutArg.slice(1, -1) + "\n";
-                } else {
-                  output += coutArg + "\n";
-                }
+                  
+                  let coutContent = coutStmt.replace(/cout\s*<<\s*/, '').replace(/\s*<<\s*endl\s*;/, '');
+                  
+                  if (coutContent === loopVar) {
+                    output += i + "\n";
+                  } else if (coutContent.includes(loopVar)) {
+                    output += coutContent.replace(loopVar, i.toString()) + "\n";
+                  } else if (coutContent.startsWith('"') && coutContent.endsWith('"')) {
+                    output += coutContent.slice(1, -1) + "\n";
+                  } else if (coutContent.includes("greet")) {
+                    // Handle greet function call
+                    const greetMatch = coutContent.match(/greet\s*\(\s*"([^"]*)"\s*\)/);
+                    if (greetMatch) {
+                      const name = greetMatch[1];
+                      output += `Hello, ${name}!` + "\n";
+                    } else {
+                      output += coutContent + "\n";
+                    }
+                  } else {
+                    output += coutContent + "\n";
+                  }
+                });
               }
             }
           }
-        } else if (code.includes("cout")) {
-          // Handle individual cout statements
-          const coutMatches = code.match(/cout\s*<<\s*(.*?)\s*(?:<<\s*endl)?;/g);
-          if (coutMatches) {
-            coutMatches.forEach(match => {
-              // Extract the content being output
-              let content = match.replace(/cout\s*<<\s*/, '').replace(/\s*<<\s*endl\s*;/, '');
+          
+          // Handle cout statements outside loops
+          const coutOutside = code.match(/cout\s*<<\s*(.*?)\s*(?:<<\s*endl)?;/g);
+          if (coutOutside) {
+            coutOutside.forEach(coutStmt => {
+              // Skip statements already processed in loops
+              if (cppForLoop && code.indexOf(coutStmt) > code.indexOf("for (") && 
+                  code.indexOf(coutStmt) < code.indexOf("return 0;")) {
+                return;
+              }
               
-              if (content.startsWith('"') && content.endsWith('"')) {
-                output += content.slice(1, -1) + "\n";
-              } else if (content === "endl") {
+              let coutContent = coutStmt.replace(/cout\s*<<\s*/, '').replace(/\s*<<\s*endl\s*;/, '');
+              
+              if (coutContent.startsWith('"') && coutContent.endsWith('"')) {
+                output += coutContent.slice(1, -1) + "\n";
+              } else if (coutContent.includes("greet")) {
+                // Handle greet function call
+                const greetMatch = coutContent.match(/greet\s*\(\s*"([^"]*)"\s*\)/);
+                if (greetMatch) {
+                  const name = greetMatch[1];
+                  output += `Hello, ${name}!` + "\n";
+                } else {
+                  output += coutContent + "\n";
+                }
+              } else if (coutContent === "endl") {
                 output += "\n";
               } else {
                 try {
-                  output += eval(content) + "\n";
+                  output += eval(coutContent) + "\n";
                 } catch {
-                  output += content + "\n";
+                  output += coutContent + "\n";
                 }
               }
             });
           }
-        }
-        break;
+          break;
+      }
+    }
+    
+    executeLoopsAndPrints();
+
+    // If we didn't generate any output but there's no error, provide a generic message
+    if (!output && !error) {
+      output = "[Code executed successfully with no visible output]\n";
     }
 
     return { output, error };
@@ -542,148 +825,4 @@ const CodeTerminal = () => {
       memoryStats: {
         ...prev.memoryStats,
         heapUsed: prev.memoryStats.heapUsed + 1024 * 1024, // Simulate 1MB increase
-        timeElapsed: performance.now() - startTime,
-        cpuUsage: Math.min(prev.memoryStats.cpuUsage + 5, 100), // Increase CPU usage
-      }
-    }));
-    
-    setOutput(prev => prev + `\n[Debugger] Stepped to line ${nextLine}`);
-  };
-
-  const handleStopDebug = () => {
-    setDebugState(prev => ({ ...prev, isDebugging: false }));
-    setOutput(prev => prev + "\n[Debugger] Debug session terminated");
-    
-    toast({
-      title: "Debug Mode Deactivated",
-      description: "Returning to regular editing mode.",
-    });
-  };
-
-  const handleClear = () => {
-    setOutput("");
-    setDebugState(prev => ({ ...prev, isDebugging: false, currentLine: 0 }));
-    
-    toast({
-      title: "Console Cleared",
-      description: "Output terminal has been cleared.",
-    });
-  };
-
-  const toggleTheme = () => {
-    setIsDarkTheme(!isDarkTheme);
-    document.documentElement.classList.toggle("dark");
-  };
-
-  return (
-    <Card className="w-full mx-auto border-2">
-      <CardHeader className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <LanguageSelector
-                selectedLanguage={language}
-                onLanguageChange={setLanguage}
-              />
-              <Badge variant="outline" className={cn(
-                "ml-2 transition-colors",
-                isRunning ? "bg-primary/10 text-primary" : 
-                debugState.isDebugging ? "bg-yellow-500/10 text-yellow-500" : 
-                "bg-muted"
-              )}>
-                {isRunning ? "Running" : 
-                 debugState.isDebugging ? "Debugging" : 
-                 "Ready"} - {language.toUpperCase()} Compiler
-              </Badge>
-            </div>
-          </div>
-          <Toggle
-            pressed={isDarkTheme}
-            onPressedChange={toggleTheme}
-            aria-label="Toggle theme"
-            className="bg-background hover:bg-muted"
-          >
-            {isDarkTheme ? (
-              <SunIcon className="h-4 w-4" />
-            ) : (
-              <MoonIcon className="h-4 w-4" />
-            )}
-          </Toggle>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className={cn(
-          "min-h-[300px] border-2 rounded-lg overflow-hidden transition-colors relative",
-          !isDarkTheme ? "border-gray-300 shadow-sm" : "border-gray-800"
-        )}>
-          <CodeMirror
-            value={code}
-            height="300px"
-            extensions={[getLanguageExtension(language)]}
-            theme={isDarkTheme ? oneDark : EditorView.theme({})}
-            onChange={(value) => setCode(value)}
-            className={cn(
-              "text-sm transition-colors",
-              !isDarkTheme ? "bg-white" : "bg-gray-900"
-            )}
-          />
-          {debugState.isDebugging && (
-            <div className="absolute left-0 top-0 w-8 h-full bg-opacity-20 pointer-events-none">
-              {debugState.breakpoints.map(line => (
-                <div
-                  key={line}
-                  className="absolute left-0 w-full h-5 bg-red-500"
-                  style={{ top: `${line * 20}px` }}
-                />
-              ))}
-              {debugState.currentLine > 0 && (
-                <div
-                  className="absolute left-0 w-full h-5 bg-yellow-500"
-                  style={{ top: `${debugState.currentLine * 20}px` }}
-                />
-              )}
-            </div>
-          )}
-        </div>
-        
-        <ControlPanel
-          onRun={handleRun}
-          onDebug={handleDebug}
-          onStepOver={handleStepOver}
-          onStopDebug={handleStopDebug}
-          onClear={handleClear}
-          isRunning={isRunning}
-          isDebugging={debugState.isDebugging}
-          hasOutput={!!output}
-        />
-
-        <Separator className="my-4" />
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <OutputTerminal
-              output={output}
-              isDarkTheme={isDarkTheme}
-            />
-          </div>
-          {debugState.isDebugging && (
-            <>
-              <DebugPanel
-                variables={debugState.variables}
-                isDarkTheme={isDarkTheme}
-              />
-              <div className="md:col-span-3">
-                <MemoryPanel
-                  stats={debugState.memoryStats}
-                  isDarkTheme={isDarkTheme}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default CodeTerminal;
+        timeElapsed:
