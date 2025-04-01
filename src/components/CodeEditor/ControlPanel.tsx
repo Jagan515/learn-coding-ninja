@@ -1,6 +1,5 @@
-
 import { Button } from "../ui/button";
-import { Play, Bug, StepForward, StepInto, StepOut, Pause, Trash2 } from "lucide-react";
+import { Play, Bug, StepForward, ArrowDownToLine, ArrowUpFromLine, Pause, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
@@ -90,7 +89,7 @@ const ControlPanel = ({
                     variant="outline"
                     onClick={onStepInto}
                   >
-                    <StepInto className="h-4 w-4 mr-2" />
+                    <ArrowDownToLine className="h-4 w-4 mr-2" />
                     Step Into
                   </Button>
                 </TooltipTrigger>
@@ -104,7 +103,7 @@ const ControlPanel = ({
                     variant="outline"
                     onClick={onStepOut}
                   >
-                    <StepOut className="h-4 w-4 mr-2" />
+                    <ArrowUpFromLine className="h-4 w-4 mr-2" />
                     Step Out
                   </Button>
                 </TooltipTrigger>
