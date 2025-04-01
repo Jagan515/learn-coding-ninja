@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -825,4 +826,146 @@ const CodeTerminal = () => {
       memoryStats: {
         ...prev.memoryStats,
         heapUsed: prev.memoryStats.heapUsed + 1024 * 1024, // Simulate 1MB increase
-        timeElapsed:
+        timeElapsed: prev.memoryStats.timeElapsed + (performance.now() - startTime) / 1000,
+        cpuUsage: Math.min(prev.memoryStats.cpuUsage + 2, 95), // Increment CPU usage with a cap
+      }
+    }));
+    
+    // Update output with step information
+    setOutput(prev => prev + `\n[Debugger] Stepped to line ${nextLine}`);
+  };
+
+  const handleStopDebug = () => {
+    setDebugState(prev => ({
+      ...prev,
+      isDebugging: false,
+    }));
+    
+    setOutput(prev => prev + "\n[Debugger] Debugging session stopped");
+    
+    toast({
+      title: "Debug Mode Deactivated",
+      description: "Debugging session has been ended.",
+    });
+  };
+
+  const handleClear = () => {
+    setOutput("");
+    setDebugState(prev => ({
+      ...prev,
+      currentLine: 0,
+      variables: {},
+      memoryStats: {
+        heapUsed: 0,
+        heapTotal: 0,
+        timeElapsed: 0,
+        cpuUsage: 0,
+      }
+    }));
+  };
+
+  const handleThemeToggle = () => {
+    setIsDarkTheme(prev => !prev);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row items-start gap-4 justify-between">
+        <LanguageSelector 
+          selectedLanguage={language}
+          onLanguageChange={setLanguage}
+        />
+        
+        <div className="flex gap-2 items-center">
+          <span className="text-sm text-muted-foreground">Theme:</span>
+          <Toggle
+            pressed={isDarkTheme}
+            onPressedChange={handleThemeToggle}
+            aria-label="Toggle theme"
+          >
+            {isDarkTheme ? (
+              <MoonIcon className="h-4 w-4" />
+            ) : (
+              <SunIcon className="h-4 w-4" />
+            )}
+          </Toggle>
+        </div>
+      </div>
+      
+      <div className="rounded-md border">
+        <CodeMirror
+          value={code}
+          onChange={setCode}
+          extensions={[getLanguageExtension(language)]}
+          theme={isDarkTheme ? oneDark : undefined}
+          height="300px"
+          basicSetup={{
+            lineNumbers: true,
+            highlightActiveLineGutter: true,
+            highlightSpecialChars: true,
+            foldGutter: true,
+            drawSelection: true,
+            dropCursor: true,
+            allowMultipleSelections: true,
+            indentOnInput: true,
+            syntaxHighlighting: true,
+            bracketMatching: true,
+            closeBrackets: true,
+            autocompletion: true,
+            rectangularSelection: true,
+            crosshairCursor: true,
+            highlightActiveLine: true,
+            highlightSelectionMatches: true,
+            closeBracketsKeymap: true,
+            defaultKeymap: true,
+            searchKeymap: true,
+            historyKeymap: true,
+            foldKeymap: true,
+            completionKeymap: true,
+            lintKeymap: true,
+          }}
+          className={cn(
+            "border-0 font-mono text-sm",
+            isDarkTheme ? "bg-[#282c34]" : "bg-white"
+          )}
+        />
+      </div>
+      
+      <ControlPanel
+        onRun={handleRun}
+        onDebug={handleDebug}
+        onStepOver={handleStepOver}
+        onStopDebug={handleStopDebug}
+        onClear={handleClear}
+        isRunning={isRunning}
+        isDebugging={debugState.isDebugging}
+        hasOutput={!!output}
+      />
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <OutputTerminal 
+            output={output} 
+            isDarkTheme={isDarkTheme} 
+          />
+        </div>
+        
+        <div className="space-y-4">
+          {debugState.isDebugging && (
+            <DebugPanel 
+              variables={debugState.variables} 
+              isDarkTheme={isDarkTheme} 
+            />
+          )}
+          
+          <MemoryPanel 
+            stats={debugState.memoryStats} 
+            isDarkTheme={isDarkTheme} 
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CodeTerminal;
