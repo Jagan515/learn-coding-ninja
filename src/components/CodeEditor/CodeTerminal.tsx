@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -824,4 +825,276 @@ const CodeTerminal = () => {
         initialVariables.i = 0;
         initialVariables.sum = 0;
         initialVariables.array = [1, 2, 3, 4, 5];
-        initialVariables["*ptr"] = "0
+        initialVariables["*ptr"] = "0x7fff5fbff7c0"; // Fix: Added closing quote and a proper memory address
+        break;
+    }
+    
+    // Set debugging state
+    setDebugState({
+      isDebugging: true,
+      breakpoints: [3, 7], // Example breakpoints at lines 3 and 7
+      currentLine: 3, // Start debugging at line 3
+      variables: initialVariables,
+      callStack: createMockCallStack(language),
+      watches: ["i", "sum", "result"],
+      memoryStats: {
+        heapUsed: Math.floor(Math.random() * 50 + 15) * 1024 * 1024, // 15-65MB
+        heapTotal: 128 * 1024 * 1024, // 128MB
+        timeElapsed: Math.random() * 50 + 10, // 10-60ms
+        cpuUsage: Math.floor(Math.random() * 15 + 5), // 5-20%
+      }
+    });
+    
+    toast({
+      title: "Debug Started",
+      description: `Debugger attached to ${language.toUpperCase()} process`,
+    });
+  };
+
+  const handleStepOver = () => {
+    if (!debugState.isDebugging) return;
+    
+    // Simulate stepping over to the next line
+    setDebugState(prev => ({
+      ...prev,
+      currentLine: prev.currentLine + 1,
+      variables: {
+        ...prev.variables,
+        counter: prev.variables.counter !== undefined ? prev.variables.counter + 1 : 0,
+      }
+    }));
+    
+    toast({
+      title: "Step Over",
+      description: "Executed current line and moved to next statement",
+    });
+  };
+  
+  const handleStepInto = () => {
+    if (!debugState.isDebugging) return;
+    
+    // Simulate stepping into a function
+    const newCallStack = [...debugState.callStack];
+    
+    if (language === "python") {
+      newCallStack.push("calculate_sum(numbers)");
+    } else if (language === "java") {
+      newCallStack.push("Main.calculateSum(int[])");
+    } else {
+      newCallStack.push("calculate_sum(int*, int)");
+    }
+    
+    setDebugState(prev => ({
+      ...prev,
+      currentLine: prev.currentLine + 1,
+      callStack: newCallStack
+    }));
+    
+    toast({
+      title: "Step Into",
+      description: "Stepping into function call",
+    });
+  };
+  
+  const handleStepOut = () => {
+    if (!debugState.isDebugging || debugState.callStack.length <= 1) return;
+    
+    // Simulate stepping out of a function
+    const newCallStack = [...debugState.callStack];
+    newCallStack.pop();
+    
+    setDebugState(prev => ({
+      ...prev,
+      currentLine: prev.currentLine + 2,
+      callStack: newCallStack,
+      variables: {
+        ...prev.variables,
+        result: 15 // Simulate a function returning a value
+      }
+    }));
+    
+    toast({
+      title: "Step Out",
+      description: "Returning from function call",
+    });
+  };
+  
+  const handleStopDebug = () => {
+    setDebugState(prev => ({
+      ...prev,
+      isDebugging: false
+    }));
+    
+    toast({
+      title: "Debug Terminated",
+      description: "Debugging session ended",
+    });
+  };
+
+  const handleClear = () => {
+    setOutput("");
+    toast({
+      title: "Output Cleared",
+      description: "Terminal output has been cleared",
+    });
+  };
+  
+  // Light/dark theme toggling
+  const handleToggleTheme = () => {
+    setIsDarkTheme(prev => !prev);
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="lg:col-span-2 space-y-4">
+        <Card className="overflow-hidden border-2">
+          <CardHeader className="bg-card p-4 flex flex-row items-center justify-between space-y-0">
+            <div className="flex items-center gap-2">
+              <LanguageSelector 
+                language={language} 
+                onChange={setLanguage} 
+                disabled={isRunning || debugState.isDebugging} 
+              />
+            </div>
+            
+            <div className="flex items-center">
+              <Toggle
+                aria-label="Toggle theme"
+                pressed={!isDarkTheme}
+                onPressedChange={handleToggleTheme}
+                size="sm"
+                className="ml-2"
+              >
+                {isDarkTheme ? (
+                  <SunIcon className="h-4 w-4" />
+                ) : (
+                  <MoonIcon className="h-4 w-4" />
+                )}
+              </Toggle>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="p-0">
+            <div className="relative min-h-[400px]">
+              <CodeMirror
+                value={code}
+                height="400px"
+                extensions={[getLanguageExtension(language)]}
+                onChange={setCode}
+                theme={isDarkTheme ? oneDark : undefined}
+                basicSetup={{
+                  lineNumbers: true,
+                  highlightActiveLineGutter: true,
+                  highlightSpecialChars: true,
+                  foldGutter: true,
+                  dropCursor: true,
+                  allowMultipleSelections: true,
+                  indentOnInput: true,
+                  syntaxHighlighting: true,
+                  bracketMatching: true,
+                  closeBrackets: true,
+                  autocompletion: true,
+                  rectangularSelection: true,
+                  crosshairCursor: true,
+                  highlightActiveLine: true,
+                  highlightSelectionMatches: true,
+                  closeBracketsKeymap: true,
+                  searchKeymap: true,
+                  foldKeymap: true,
+                  completionKeymap: true,
+                  lintKeymap: true,
+                }}
+                className={cn(
+                  "text-sm font-mono",
+                  isDarkTheme ? "bg-gray-900" : "bg-white"
+                )}
+                readOnly={isRunning || debugState.isDebugging}
+              />
+              
+              {(isRunning || debugState.isDebugging) && (
+                <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center">
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "text-lg py-1 px-3 animate-pulse",
+                      debugState.isDebugging ? "bg-amber-500/20 text-amber-500" : "bg-blue-500/20 text-blue-500"
+                    )}
+                  >
+                    {debugState.isDebugging ? "Debugging..." : "Running..."}
+                  </Badge>
+                </div>
+              )}
+              
+              {debugState.isDebugging && (
+                <div className="absolute left-0 top-0 h-full w-10 bg-background/10">
+                  {debugState.breakpoints.map((line) => (
+                    <div 
+                      key={line}
+                      className="w-4 h-4 rounded-full bg-red-500 absolute ml-3"
+                      style={{ top: `${line * 22}px` }}
+                    />
+                  ))}
+                  <div 
+                    className="w-full h-6 bg-yellow-500/30 absolute pointer-events-none"
+                    style={{ top: `${debugState.currentLine * 22 - 11}px` }}
+                  />
+                </div>
+              )}
+            </div>
+            
+            <Separator />
+            
+            <ControlPanel 
+              onRun={handleRun}
+              onDebug={handleDebug}
+              onStepOver={handleStepOver}
+              onStepInto={handleStepInto}
+              onStepOut={handleStepOut}
+              onStop={handleStopDebug}
+              onClear={handleClear}
+              isRunning={isRunning}
+              isDebugging={debugState.isDebugging}
+            />
+          </CardContent>
+        </Card>
+        
+        <OutputTerminal 
+          output={output}
+          isDarkTheme={isDarkTheme}
+        />
+      </div>
+      
+      <div className="space-y-4">
+        {debugState.isDebugging ? (
+          <>
+            <DebugPanel
+              variables={debugState.variables}
+              callStack={debugState.callStack}
+              currentLine={debugState.currentLine}
+              language={language}
+            />
+            <MemoryPanel 
+              memoryStats={debugState.memoryStats} 
+              isDarkTheme={isDarkTheme} 
+            />
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-[400px] rounded-md border-2 p-4 border-dashed bg-muted/40">
+            <div className="text-center space-y-2">
+              <div className="text-muted-foreground">
+                Debug panel will appear here when debugging is active
+              </div>
+              <div>
+                <Badge variant="outline" className="text-xs">
+                  Press Debug to start
+                </Badge>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CodeTerminal;
