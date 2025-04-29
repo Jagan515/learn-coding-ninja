@@ -70,8 +70,8 @@ const Navbar = () => {
             className="flex items-center gap-2 cursor-pointer transition-all hover:scale-105" 
             onClick={() => navigate("/")}
           >
-            <div className="bg-gradient-purple text-white p-2 rounded-lg">
-              <Laptop className="h-6 w-6" />
+            <div className="bg-gradient-to-r from-primary to-accent p-2 rounded-lg shadow-md">
+              <Laptop className="h-6 w-6 text-white" />
             </div>
             <span className="ml-2 text-xl font-bold gradient-text">CodeNinja</span>
           </div>
@@ -82,29 +82,29 @@ const Navbar = () => {
               <button
                 key={item.name}
                 onClick={() => handleNavigation(item.href, item.requiresAuth)}
-                className={`nav-link font-medium inline-flex items-center px-2 py-1 rounded-md ${
+                className={`nav-link font-medium inline-flex items-center px-3 py-1.5 rounded-md transition-all ${
                   isActive(item.href) 
-                    ? "text-primary relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:rounded-full" 
-                    : "text-muted-foreground"
+                    ? "text-primary relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-primary after:rounded-full bg-primary/5" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                 }`}
               >
                 {item.name}
                 {item.requiresAuth && !user && (
-                  <Lock className="ml-1 h-4 w-4 text-muted-foreground" />
+                  <Lock className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
                 )}
               </button>
             ))}
             {user ? (
               <Button 
                 onClick={handleSignOut} 
-                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-sm"
               >
                 Sign Out
               </Button>
             ) : (
               <Button 
                 onClick={() => navigate("/login")} 
-                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity shadow-sm"
               >
                 Get Started
               </Button>
@@ -115,7 +115,7 @@ const Navbar = () => {
           <div className="md:hidden">
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="focus:ring-2 focus:ring-primary/20">
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
@@ -125,8 +125,10 @@ const Navbar = () => {
                     <button
                       key={item.name}
                       onClick={() => handleNavigation(item.href, item.requiresAuth)}
-                      className={`nav-link font-medium inline-flex items-center text-lg ${
-                        isActive(item.href) ? "text-primary" : "text-muted-foreground"
+                      className={`nav-link font-medium inline-flex items-center text-lg p-2 rounded-md transition-all ${
+                        isActive(item.href) 
+                          ? "text-primary bg-primary/5 border-l-4 border-primary pl-4" 
+                          : "text-muted-foreground hover:bg-muted/20"
                       }`}
                     >
                       {item.name}
@@ -135,21 +137,23 @@ const Navbar = () => {
                       )}
                     </button>
                   ))}
-                  {user ? (
-                    <Button
-                      onClick={handleSignOut}
-                      className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity w-full mt-4"
-                    >
-                      Sign Out
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={() => navigate("/login")}
-                      className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity w-full mt-4"
-                    >
-                      Get Started
-                    </Button>
-                  )}
+                  <div className="pt-4 border-t border-border/40">
+                    {user ? (
+                      <Button
+                        onClick={handleSignOut}
+                        className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity w-full shadow-sm"
+                      >
+                        Sign Out
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => navigate("/login")}
+                        className="bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity w-full shadow-sm"
+                      >
+                        Get Started
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
