@@ -13,15 +13,15 @@ const ChatLoading = () => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="flex items-center justify-center h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/60 text-white shrink-0 shadow-md">
+      <div className="flex items-center justify-center h-9 w-9 rounded-full bg-gradient-to-br from-primary to-primary/60 text-white shrink-0 shadow-lg">
         <Loader2 className="h-5 w-5 animate-spin" />
       </div>
       
-      <div className="flex items-center gap-1.5 p-3 rounded-2xl bg-white/90 dark:bg-card/90 border border-primary/10 shadow-sm">
+      <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-white/95 dark:bg-card/95 border border-primary/10 shadow-md backdrop-blur-sm">
         {dots.map((dot) => (
           <motion.div
             key={dot}
-            className="h-2.5 w-2.5 rounded-full bg-gradient-to-r from-primary to-accent"
+            className="h-3 w-3 rounded-full bg-gradient-to-r from-primary to-accent"
             initial={{ opacity: 0.3, scale: 0.8 }}
             animate={{ 
               opacity: [0.3, 1, 0.3], 

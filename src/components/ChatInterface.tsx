@@ -159,7 +159,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
   };
 
   return (
-    <Card className="flex flex-col h-[600px] overflow-hidden bg-gradient-to-b from-white to-slate-50/80 dark:from-card dark:to-card/90 border-primary/10 shadow-md rounded-xl">
+    <Card className="flex flex-col h-[600px] overflow-hidden bg-gradient-to-b from-white to-slate-50/90 dark:from-card dark:to-card/95 border-primary/10 shadow-lg rounded-xl">
       <ChatHeader onClear={clearChat} hasMessages={messages.length > 0} />
 
       <CardContent className="flex-1 p-0">

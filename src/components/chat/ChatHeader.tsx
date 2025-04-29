@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Bot, Trash2, X } from "lucide-react";
+import { Bot, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ChatHeaderProps {
@@ -10,10 +10,10 @@ interface ChatHeaderProps {
 
 const ChatHeader = ({ onClear, hasMessages }: ChatHeaderProps) => {
   return (
-    <div className="flex items-center justify-between p-4 border-b border-primary/10 bg-gradient-to-r from-white/90 to-slate-50/90 backdrop-blur-sm dark:from-card/95 dark:to-card/90 rounded-t-lg">
+    <div className="flex items-center justify-between p-4 border-b border-primary/10 bg-gradient-to-r from-white/95 to-slate-50/95 backdrop-blur-sm dark:from-card/98 dark:to-card/95 rounded-t-lg">
       <div className="flex items-center gap-3">
         <div className="flex items-center justify-center h-9 w-9 rounded-full bg-gradient-to-br from-primary to-accent text-white shadow-md">
-          <Bot className="h-4.5 w-4.5" />
+          <Bot className="h-5 w-5" />
         </div>
         <div>
           <h3 className="font-semibold text-foreground">Course Assistant</h3>

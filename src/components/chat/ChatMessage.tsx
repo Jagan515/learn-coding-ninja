@@ -12,7 +12,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
   return (
     <div
       className={cn(
-        "flex gap-3",
+        "flex gap-3.5",
         message.role === "assistant" ? "items-start" : "items-start flex-row-reverse"
       )}
     >
@@ -29,11 +29,14 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
         )}
       </div>
       
-      <div
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
         className={cn(
-          "max-w-[85%] rounded-2xl px-4 py-3 shadow-sm",
+          "max-w-[85%] rounded-2xl px-5 py-3.5 shadow-sm",
           message.role === "assistant"
-            ? "bg-white dark:bg-card border border-primary/10 text-foreground"
+            ? "bg-white/95 dark:bg-card/95 backdrop-blur-sm border border-primary/10 text-foreground"
             : "bg-gradient-to-r from-primary to-accent text-white"
         )}
       >
@@ -44,7 +47,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
             </span>
           ))}
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };
