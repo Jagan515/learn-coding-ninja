@@ -151,14 +151,19 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
     setMessages([]);
     setError(null);
     setErrorType("general");
+    toast({
+      title: "Chat cleared",
+      description: "Your conversation has been reset.",
+      className: "bg-primary/5 border-primary/10",
+    });
   };
 
   return (
-    <Card className="flex flex-col h-[600px] overflow-hidden bg-gradient-to-b from-white to-slate-50 dark:from-card dark:to-card/90 border-primary/10 shadow-md">
+    <Card className="flex flex-col h-[600px] overflow-hidden bg-gradient-to-b from-white to-slate-50/80 dark:from-card dark:to-card/90 border-primary/10 shadow-md rounded-xl">
       <ChatHeader onClear={clearChat} hasMessages={messages.length > 0} />
 
       <CardContent className="flex-1 p-0">
-        <ScrollArea className="h-[calc(100%-70px)] px-4 py-3">
+        <ScrollArea className="h-[calc(100%-70px)] p-4">
           <div className="space-y-6">
             <AnimatePresence mode="wait">
               {messages.length === 0 ? (
@@ -177,7 +182,12 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
                     key={index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: Math.min(0.1 * index, 0.5) }}
+                    transition={{ 
+                      duration: 0.4, 
+                      delay: Math.min(0.1 * index, 0.5),
+                      type: "spring",
+                      stiffness: 100
+                    }}
                   >
                     <ChatMessage message={message} />
                   </motion.div>

@@ -17,7 +17,7 @@ const ChatMessage = ({ message }: ChatMessageProps) => {
       )}
     >
       <div className={cn(
-        "flex items-center justify-center h-9 w-9 rounded-full shrink-0 shadow-sm transition-all",
+        "flex items-center justify-center h-9 w-9 rounded-full shrink-0 shadow-md transition-all",
         message.role === "assistant" 
           ? "bg-gradient-to-br from-primary to-primary/60 text-white" 
           : "bg-gradient-to-br from-accent to-accent/60 text-white"
