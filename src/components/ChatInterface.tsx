@@ -11,6 +11,7 @@ import ChatLoading from "./chat/ChatLoading";
 import ChatInput from "./chat/ChatInput";
 import { Message, ChatContext } from "./chat/types";
 import { AnimatePresence, motion } from "framer-motion";
+import { Card, CardContent } from "./ui/card";
 
 interface ChatInterfaceProps {
   courseContext: ChatContext;
@@ -153,53 +154,63 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
   };
 
   return (
-    <div className="flex flex-col h-[600px] border rounded-lg overflow-hidden bg-gradient-to-b from-white to-slate-50 dark:from-card dark:to-card/90 shadow-md">
+    <Card className="flex flex-col h-[600px] overflow-hidden bg-gradient-to-b from-white to-slate-50 dark:from-card dark:to-card/90 border-primary/10 shadow-md">
       <ChatHeader onClear={clearChat} hasMessages={messages.length > 0} />
 
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-5">
-          <AnimatePresence>
-            {messages.length === 0 ? (
-              <ChatEmptyState />
-            ) : (
-              messages.map((message, index) => (
+      <CardContent className="flex-1 p-0">
+        <ScrollArea className="h-[calc(100%-70px)] px-4 py-3">
+          <div className="space-y-6">
+            <AnimatePresence mode="wait">
+              {messages.length === 0 ? (
                 <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 * index }}
+                  key="empty"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <ChatMessage message={message} />
+                  <ChatEmptyState />
                 </motion.div>
-              ))
-            )}
+              ) : (
+                messages.map((message, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: Math.min(0.1 * index, 0.5) }}
+                  >
+                    <ChatMessage message={message} />
+                  </motion.div>
+                ))
+              )}
 
-            {/* Error state with retry button */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <ChatError error={error} errorType={errorType} onRetry={retryLastMessage} />
-              </motion.div>
-            )}
+              {/* Error state with retry button */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <ChatError error={error} errorType={errorType} onRetry={retryLastMessage} />
+                </motion.div>
+              )}
 
-            {/* Loading indicator */}
-            {isLoading && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <ChatLoading />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              {/* Loading indicator */}
+              {isLoading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <ChatLoading />
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-          <div ref={messagesEndRef} />
-        </div>
-      </ScrollArea>
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      </CardContent>
 
       <ChatInput 
         onSubmit={handleSendMessage} 
@@ -207,7 +218,7 @@ const ChatInterface = ({ courseContext }: ChatInterfaceProps) => {
         disabled={errorType === "quota" || thinking} 
         thinking={thinking}
       />
-    </div>
+    </Card>
   );
 };
 

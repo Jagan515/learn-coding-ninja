@@ -1,6 +1,7 @@
 
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowRight, RefreshCw } from "lucide-react";
 import { Button } from "../ui/button";
+import { motion } from "framer-motion";
 
 interface ChatErrorProps {
   error: string;
@@ -10,37 +11,53 @@ interface ChatErrorProps {
 
 const ChatError = ({ error, errorType, onRetry }: ChatErrorProps) => {
   return (
-    <div className="flex items-start gap-3 animate-slideIn">
-      <div className="flex items-center justify-center h-9 w-9 rounded-full bg-red-100 text-red-600 shrink-0">
-        <AlertCircle className="h-5 w-5" />
+    <motion.div 
+      className="flex flex-col gap-4 p-4 rounded-lg border border-destructive/20 bg-destructive/5 text-center"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+    >
+      <div className="flex flex-col items-center gap-2">
+        <div className="bg-destructive/10 p-3 rounded-full">
+          <AlertTriangle className="h-6 w-6 text-destructive" />
+        </div>
+        <h3 className="font-medium text-destructive">
+          {errorType === "connection" 
+            ? "Connection Error" 
+            : errorType === "quota" 
+              ? "Usage Limit Reached"
+              : "Something went wrong"}
+        </h3>
+        <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+          {error}
+        </p>
       </div>
       
-      <div className="bg-red-50 text-red-700 rounded-2xl p-4 shadow-sm max-w-[85%] border border-red-100">
-        <div className="mb-3">
-          <h4 className="font-medium mb-1">
-            {errorType === "quota" 
-              ? "Service Temporarily Unavailable" 
-              : errorType === "connection"
-                ? "Connection Error"
-                : "Error"
-            }
-          </h4>
-          <p className="text-sm">{error}</p>
-        </div>
-        
-        {errorType !== "quota" && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onRetry}
-            className="bg-white text-red-600 hover:bg-red-50 border-red-200 flex items-center gap-1"
-          >
-            <RefreshCw className="h-3 w-3" />
-            Retry
-          </Button>
-        )}
-      </div>
-    </div>
+      {errorType !== "quota" && (
+        <Button 
+          onClick={onRetry}
+          className="mx-auto flex items-center gap-2 bg-gradient-to-r from-primary to-accent text-white"
+          size="sm"
+        >
+          <RefreshCw className="h-3 w-3" />
+          Try Again
+        </Button>
+      )}
+      
+      {errorType === "quota" && (
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="mx-auto border-primary/20 text-primary hover:bg-primary/5"
+          asChild
+        >
+          <a href="https://lovable.ai" target="_blank" rel="noopener noreferrer">
+            Learn More
+            <ArrowRight className="ml-2 h-3 w-3" />
+          </a>
+        </Button>
+      )}
+    </motion.div>
   );
 };
 

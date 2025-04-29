@@ -1,71 +1,88 @@
 
-import { MessageSquare, Sparkles, Code, Book, Lightbulb, Search } from "lucide-react";
+import { SparklesIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
-};
-
 const ChatEmptyState = () => {
+  const suggestedQuestions = [
+    "Explain arrays in Python",
+    "How do I create a function?",
+    "What are the control flow statements?",
+    "Explain object-oriented programming"
+  ];
+
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <motion.div 
-      className="flex flex-col items-center justify-center h-72 text-center p-4"
+      className="flex flex-col items-center justify-center text-center py-8 px-4"
       variants={container}
       initial="hidden"
       animate="show"
     >
       <motion.div 
-        className="bg-gradient-to-br from-primary/20 to-primary/5 p-3 rounded-full mb-4"
+        className="w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-full flex items-center justify-center mb-4"
         variants={item}
       >
-        <MessageSquare className="h-8 w-8 text-primary" />
+        <SparklesIcon className="w-8 h-8 text-primary" />
       </motion.div>
       
       <motion.h3 
-        className="text-xl font-medium mb-2 gradient-text"
+        className="text-lg font-semibold mb-2"
         variants={item}
       >
-        How can I help you learn?
+        Ask Your Learning Assistant
       </motion.h3>
       
       <motion.p 
-        className="text-muted-foreground text-sm max-w-xs leading-relaxed"
+        className="text-sm text-muted-foreground mb-6 max-w-xs"
         variants={item}
       >
-        Ask me anything about the courses, programming concepts, or learning recommendations.
+        Get help with course content, coding concepts, or ask for examples and explanations.
       </motion.p>
       
       <motion.div 
-        className="mt-6 space-y-2 w-full max-w-xs"
+        className="space-y-2 w-full max-w-md"
         variants={item}
       >
-        <div className="grid grid-cols-2 gap-2">
-          <SuggestionBubble icon={<Book className="h-3 w-3" />} text="What topics are covered in this course?" />
-          <SuggestionBubble icon={<Code className="h-3 w-3" />} text="Explain functions in Python" />
-          <SuggestionBubble icon={<Search className="h-3 w-3" />} text="What are loops used for?" />
-          <SuggestionBubble icon={<Lightbulb className="h-3 w-3" />} text="Give me practice problems" />
-        </div>
+        {suggestedQuestions.map((question, index) => (
+          <Button
+            key={index}
+            variant="outline"
+            className="text-sm w-full justify-start border-primary/10 hover:bg-primary/5 hover:text-primary"
+            onClick={() => {
+              const input = document.querySelector("textarea");
+              if (input) {
+                const nativeTextAreaValueSetter = Object.getOwnPropertyDescriptor(
+                  window.HTMLTextAreaElement.prototype,
+                  "value"
+                )?.set;
+                nativeTextAreaValueSetter?.call(input, question);
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+                input.focus();
+              }
+            }}
+          >
+            <SparklesIcon className="mr-2 h-4 w-4 text-primary" />
+            {question}
+          </Button>
+        ))}
       </motion.div>
     </motion.div>
   );
 };
-
-const SuggestionBubble = ({ icon, text }: { icon: React.ReactNode, text: string }) => (
-  <div className="bg-white/50 backdrop-blur-sm border border-primary/10 rounded-full px-3 py-2 text-xs text-muted-foreground hover:bg-primary/5 cursor-pointer transition-colors flex items-center">
-    <span className="mr-1.5 text-primary">{icon}</span>
-    {text}
-  </div>
-);
 
 export default ChatEmptyState;
