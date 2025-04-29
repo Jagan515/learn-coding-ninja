@@ -14,7 +14,7 @@ interface ControlPanelProps {
   onClear: () => void;
   isRunning: boolean;
   isDebugging: boolean;
-  hasOutput: boolean;
+  hasOutput?: boolean;
 }
 
 const ControlPanel = ({
@@ -27,7 +27,7 @@ const ControlPanel = ({
   onClear,
   isRunning,
   isDebugging,
-  hasOutput,
+  hasOutput = false,
 }: ControlPanelProps) => {
   return (
     <TooltipProvider delayDuration={300}>

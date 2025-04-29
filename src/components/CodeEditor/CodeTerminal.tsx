@@ -944,6 +944,43 @@ const CodeTerminal = () => {
     setIsDarkTheme(prev => !prev);
   };
 
+  // Add watchVariable and breakpoint handlers
+  const handleAddBreakpoint = (line: number) => {
+    setDebugState(prev => ({
+      ...prev,
+      breakpoints: [...prev.breakpoints, line]
+    }));
+    
+    toast({
+      title: "Breakpoint Added",
+      description: `Breakpoint set at line ${line}`,
+    });
+  };
+  
+  const handleRemoveBreakpoint = (line: number) => {
+    setDebugState(prev => ({
+      ...prev,
+      breakpoints: prev.breakpoints.filter(bp => bp !== line)
+    }));
+    
+    toast({
+      title: "Breakpoint Removed",
+      description: `Breakpoint at line ${line} removed`,
+    });
+  };
+  
+  const handleWatchVariable = (variable: string) => {
+    setDebugState(prev => ({
+      ...prev,
+      watches: [...prev.watches, variable]
+    }));
+    
+    toast({
+      title: "Watch Added",
+      description: `Now watching variable: ${variable}`,
+    });
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div className="lg:col-span-2 space-y-4">
@@ -1050,10 +1087,11 @@ const CodeTerminal = () => {
               onStepOver={handleStepOver}
               onStepInto={handleStepInto}
               onStepOut={handleStepOut}
-              onStop={handleStopDebug}
+              onStopDebug={handleStopDebug}
               onClear={handleClear}
               isRunning={isRunning}
               isDebugging={debugState.isDebugging}
+              hasOutput={output.length > 0}
             />
           </CardContent>
         </Card>
@@ -1072,6 +1110,11 @@ const CodeTerminal = () => {
               callStack={debugState.callStack}
               currentLine={debugState.currentLine}
               language={language}
+              isDarkTheme={isDarkTheme}
+              breakpoints={debugState.breakpoints}
+              onAddBreakpoint={handleAddBreakpoint}
+              onRemoveBreakpoint={handleRemoveBreakpoint}
+              onWatchVariable={handleWatchVariable}
             />
             <MemoryPanel 
               memoryStats={debugState.memoryStats} 
