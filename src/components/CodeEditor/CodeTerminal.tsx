@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
@@ -824,4 +825,271 @@ const CodeTerminal = () => {
         initialVariables.i = 0;
         initialVariables.sum = 0;
         initialVariables.array = [1, 2, 3, 4, 5];
-        initialVariables["*ptr"] = "0
+        initialVariables["*ptr"] = "0x7fff5fbff7c0"; // Fixed the unterminated string
+        break;
+    }
+    
+    // Simulate starting debugger
+    setIsRunning(true);
+    
+    setTimeout(() => {
+      // Generate a random line number between 1-10 as the current execution line
+      const currentLine = Math.floor(Math.random() * 10) + 1;
+      
+      // Set debug state
+      setDebugState({
+        isDebugging: true,
+        breakpoints: [5, 10],
+        currentLine: currentLine,
+        variables: initialVariables,
+        callStack: createMockCallStack(language),
+        watches: ["counter", "i", "sum"],
+        memoryStats: {
+          heapUsed: Math.floor(Math.random() * 50 + 20) * 1024 * 1024, // 20-70 MB
+          heapTotal: 128 * 1024 * 1024, // 128 MB
+          timeElapsed: (performance.now() - startTime) / 1000,
+          cpuUsage: Math.floor(Math.random() * 30 + 5), // 5-35% CPU
+        },
+      });
+      
+      setOutput(`[${language.toUpperCase()}] Starting debugger...\n[${language.toUpperCase()}] Debugger attached to process\n[${language.toUpperCase()}] Breakpoint set at line 5\n[${language.toUpperCase()}] Breakpoint set at line 10\n[${language.toUpperCase()}] Program paused at line ${currentLine}\n`);
+      
+      toast({
+        title: "Debugger Active",
+        description: `Debugger started. Program paused at line ${currentLine}.`,
+      });
+      
+      setIsRunning(false);
+    }, 1000);
+  };
+  
+  const handleStepOver = () => {
+    if (!debugState.isDebugging) return;
+    
+    setIsRunning(true);
+    
+    setTimeout(() => {
+      // Move to next line
+      const nextLine = debugState.currentLine + 1;
+      
+      // Update a variable for demo
+      const updatedVariables = { ...debugState.variables };
+      if ('i' in updatedVariables) {
+        updatedVariables.i += 1;
+      } else if ('counter' in updatedVariables) {
+        updatedVariables.counter += 1;
+      }
+      
+      setDebugState(prev => ({
+        ...prev,
+        currentLine: nextLine,
+        variables: updatedVariables
+      }));
+      
+      setOutput(prev => `${prev}[${language.toUpperCase()}] Stepped to line ${nextLine}\n`);
+      
+      setIsRunning(false);
+    }, 500);
+  };
+  
+  const handleStepInto = () => {
+    if (!debugState.isDebugging) return;
+    
+    setIsRunning(true);
+    
+    setTimeout(() => {
+      // Simulate stepping into a function
+      const updatedCallStack = [...debugState.callStack];
+      
+      // Add new function to call stack based on language
+      switch (language) {
+        case "python":
+          updatedCallStack.unshift("calculate(i)");
+          break;
+        case "java":
+          updatedCallStack.unshift("Main.calculate(int)");
+          break;
+        case "c":
+        case "cpp":
+          updatedCallStack.unshift("calculate(int)");
+          break;
+      }
+      
+      setDebugState(prev => ({
+        ...prev,
+        currentLine: 15, // Jump to function start
+        callStack: updatedCallStack
+      }));
+      
+      setOutput(prev => `${prev}[${language.toUpperCase()}] Stepped into function at line 15\n`);
+      
+      setIsRunning(false);
+    }, 500);
+  };
+  
+  const handleStepOut = () => {
+    if (!debugState.isDebugging || debugState.callStack.length <= 1) return;
+    
+    setIsRunning(true);
+    
+    setTimeout(() => {
+      // Simulate stepping out of a function
+      const updatedCallStack = [...debugState.callStack];
+      updatedCallStack.shift(); // Remove top function from call stack
+      
+      setDebugState(prev => ({
+        ...prev,
+        currentLine: prev.currentLine + 5, // Return to calling function
+        callStack: updatedCallStack
+      }));
+      
+      setOutput(prev => `${prev}[${language.toUpperCase()}] Returned to caller at line ${debugState.currentLine + 5}\n`);
+      
+      setIsRunning(false);
+    }, 500);
+  };
+  
+  const handleStopDebug = () => {
+    if (!debugState.isDebugging) return;
+    
+    setOutput(prev => `${prev}[${language.toUpperCase()}] Debugging session ended\n`);
+    
+    setDebugState(prev => ({
+      ...prev,
+      isDebugging: false,
+      currentLine: 0
+    }));
+    
+    toast({
+      title: "Debugger Stopped",
+      description: "Debugging session has ended.",
+    });
+  };
+  
+  const handleClear = () => {
+    setOutput("");
+    toast({
+      title: "Terminal Cleared",
+      description: "Output terminal has been cleared.",
+    });
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <LanguageSelector 
+            language={language} 
+            onChange={setLanguage} 
+            disabled={isRunning || debugState.isDebugging}
+          />
+          
+          <Toggle 
+            pressed={isDarkTheme} 
+            onPressedChange={setIsDarkTheme}
+            aria-label="Toggle theme"
+            className="ml-2"
+          >
+            {isDarkTheme ? <MoonIcon className="h-4 w-4" /> : <SunIcon className="h-4 w-4" />}
+            <span className="ml-2">{isDarkTheme ? "Dark" : "Light"} Theme</span>
+          </Toggle>
+        </div>
+        
+        {debugState.isDebugging && (
+          <Badge 
+            variant="outline" 
+            className={cn(
+              "ml-auto font-mono text-xs px-2 py-1 animate-pulse",
+              "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-500"
+            )}
+          >
+            Debug Mode
+          </Badge>
+        )}
+      </div>
+      
+      <Card className="flex-grow flex flex-col">
+        <CardHeader className="py-3 px-4">
+          <ControlPanel 
+            onRun={handleRun}
+            onDebug={handleDebug}
+            onStepOver={handleStepOver}
+            onStepInto={handleStepInto}
+            onStepOut={handleStepOut}
+            onStopDebug={handleStopDebug}
+            onClear={handleClear}
+            isRunning={isRunning}
+            isDebugging={debugState.isDebugging}
+            hasOutput={output.length > 0}
+          />
+        </CardHeader>
+        
+        <CardContent className="p-0 flex-grow flex flex-col">
+          <div className="flex-grow">
+            <CodeMirror
+              value={code}
+              onChange={setCode}
+              height="350px"
+              extensions={[getLanguageExtension(language)]}
+              theme={isDarkTheme ? oneDark : undefined}
+              basicSetup={{
+                lineNumbers: true,
+                highlightActiveLineGutter: true,
+                highlightSpecialChars: true,
+                foldGutter: true,
+                dropCursor: true,
+                allowMultipleSelections: true,
+                indentOnInput: true,
+                syntaxHighlighting: true,
+                bracketMatching: true,
+                closeBrackets: true,
+                autocompletion: true,
+                rectangularSelection: true,
+                crosshairCursor: true,
+                highlightActiveLine: true,
+                highlightSelectionMatches: true,
+                closeBracketsKeymap: true,
+                defaultKeymap: true,
+                searchKeymap: true,
+                historyKeymap: true,
+                foldKeymap: true,
+                completionKeymap: true,
+                lintKeymap: true,
+              }}
+              readOnly={isRunning}
+              editable={!isRunning}
+            />
+          </div>
+          
+          <Separator />
+          
+          <div className="h-56">
+            {debugState.isDebugging ? (
+              <div className="grid grid-cols-5 h-full">
+                <div className="col-span-3 border-r">
+                  <OutputTerminal output={output} isDarkTheme={isDarkTheme} />
+                </div>
+                <div className="col-span-2">
+                  <DebugPanel 
+                    variables={debugState.variables} 
+                    callStack={debugState.callStack} 
+                    currentLine={debugState.currentLine}
+                    language={language}
+                  />
+                </div>
+              </div>
+            ) : (
+              <OutputTerminal output={output} isDarkTheme={isDarkTheme} />
+            )}
+          </div>
+        </CardContent>
+      </Card>
+      
+      {debugState.isDebugging && (
+        <MemoryPanel memoryStats={debugState.memoryStats} />
+      )}
+    </div>
+  );
+};
+
+export default CodeTerminal;
