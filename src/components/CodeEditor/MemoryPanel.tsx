@@ -11,12 +11,12 @@ interface MemoryStats {
 }
 
 interface MemoryPanelProps {
-  stats: MemoryStats;
+  memoryStats: MemoryStats;
   isDarkTheme: boolean;
 }
 
-const MemoryPanel = ({ stats, isDarkTheme }: MemoryPanelProps) => {
-  const heapPercentage = (stats.heapUsed / stats.heapTotal) * 100;
+const MemoryPanel = ({ memoryStats, isDarkTheme }: MemoryPanelProps) => {
+  const heapPercentage = (memoryStats.heapUsed / memoryStats.heapTotal) * 100;
   
   return (
     <div className="space-y-2">
@@ -35,22 +35,22 @@ const MemoryPanel = ({ stats, isDarkTheme }: MemoryPanelProps) => {
             </div>
             <Progress value={heapPercentage} />
             <div className="text-xs text-muted-foreground">
-              {Math.round(stats.heapUsed / 1024 / 1024)}MB / {Math.round(stats.heapTotal / 1024 / 1024)}MB
+              {Math.round(memoryStats.heapUsed / 1024 / 1024)}MB / {Math.round(memoryStats.heapTotal / 1024 / 1024)}MB
             </div>
           </div>
           
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>CPU Usage</span>
-              <span>{Math.round(stats.cpuUsage)}%</span>
+              <span>{Math.round(memoryStats.cpuUsage)}%</span>
             </div>
-            <Progress value={stats.cpuUsage} />
+            <Progress value={memoryStats.cpuUsage} />
           </div>
           
           <div className="space-y-1">
             <div className="text-sm">Execution Time</div>
             <div className="text-2xl font-mono">
-              {stats.timeElapsed.toFixed(2)}ms
+              {memoryStats.timeElapsed.toFixed(2)}ms
             </div>
           </div>
         </div>

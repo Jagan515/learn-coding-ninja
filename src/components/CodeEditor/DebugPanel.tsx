@@ -7,12 +7,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useState } from "react";
 import { Separator } from "../ui/separator";
 import { Input } from "../ui/input";
+import { ProgrammingLanguage } from "./LanguageSelector";
 
 interface DebugPanelProps {
   variables: Record<string, any>;
   isDarkTheme: boolean;
   breakpoints: number[];
   currentLine: number;
+  callStack: string[];
+  language: ProgrammingLanguage;
   onAddBreakpoint: (line: number) => void;
   onRemoveBreakpoint: (line: number) => void;
   onWatchVariable: (variable: string) => void;
@@ -23,6 +26,8 @@ const DebugPanel = ({
   isDarkTheme, 
   breakpoints,
   currentLine,
+  callStack,
+  language,
   onAddBreakpoint,
   onRemoveBreakpoint,
   onWatchVariable
@@ -223,6 +228,22 @@ const DebugPanel = ({
                 <div className="text-muted-foreground italic">
                   Enter variable names to watch during execution
                 </div>
+                {/* Show call stack */}
+                {callStack.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-xs font-semibold mb-1">Call Stack ({language}):</h4>
+                    <div className="pl-2 border-l-2 border-gray-600 space-y-1">
+                      {callStack.map((call, index) => (
+                        <div key={index} className="text-xs">
+                          <span className="text-gray-400">{index}: </span>
+                          <span className={isDarkTheme ? "text-cyan-400" : "text-cyan-600"}>
+                            {call}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </ScrollArea>
             </div>
           </TabsContent>

@@ -5,22 +5,25 @@ import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 export type ProgrammingLanguage = "python" | "java" | "c" | "cpp";
 
 interface LanguageSelectorProps {
-  selectedLanguage: ProgrammingLanguage;
-  onLanguageChange: (language: ProgrammingLanguage) => void;
+  language: ProgrammingLanguage;
+  onChange: (language: ProgrammingLanguage) => void;
+  disabled?: boolean;
 }
 
 const LanguageSelector = ({
-  selectedLanguage,
-  onLanguageChange,
+  language,
+  onChange,
+  disabled = false,
 }: LanguageSelectorProps) => {
   return (
     <ToggleGroup
       type="single"
-      value={selectedLanguage}
+      value={language}
       onValueChange={(value) => {
-        if (value) onLanguageChange(value as ProgrammingLanguage);
+        if (value) onChange(value as ProgrammingLanguage);
       }}
       className="flex flex-wrap justify-start gap-1"
+      disabled={disabled}
     >
       {["python", "java", "c", "cpp"].map((lang) => (
         <ToggleGroupItem
@@ -29,10 +32,11 @@ const LanguageSelector = ({
           aria-label={`Select ${lang}`}
           className={cn(
             "px-3 py-2 text-sm font-medium",
-            selectedLanguage === lang
+            language === lang
               ? "bg-primary text-primary-foreground"
               : "hover:bg-muted"
           )}
+          disabled={disabled}
         >
           {lang.toUpperCase()}
         </ToggleGroupItem>
